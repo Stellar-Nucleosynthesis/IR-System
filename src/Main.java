@@ -4,17 +4,14 @@ import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        Dictionary dict = new Dictionary();
-        File dir = new File("src/books");
-        for(File file : Objects.requireNonNull(dir.listFiles())){
-            dict.analyzeFile(file.getAbsolutePath());
-        }
+        //File dir = new File("src/books");
+        //for(File file : Objects.requireNonNull(dir.listFiles())){
+        //    dict.analyzeFile(file.getAbsolutePath());
+        //}
+        IncidenceMatrixDictionary dict1 = new IncidenceMatrixDictionary("src/dictionaries/dictionary1.dict1");
+        InvertedIndexDictionary dict2 = new InvertedIndexDictionary("src/dictionaries/dictionary1.dict0");
 
-        String savedDict = "src/dictionaries/dictionary1.dict0";
-        dict.saveAs(savedDict);
-
-        Dictionary dict2 = new Dictionary(savedDict);
-        System.out.println("Files: " + dict2.getFileNames());
-        System.out.println("Num of words: " + dict2.getNumOfWords());
+        String q1 = "flit AND after AND NOT posture";
+        System.out.println(dict1.query(q1).equals(dict2.query(q1)));
     }
 }

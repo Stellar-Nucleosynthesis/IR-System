@@ -3,15 +3,15 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Dictionary {
-    public Dictionary(){
+public class InvertedIndexDictionary {
+    public InvertedIndexDictionary(){
         dictionary = new HashMap<>();
         fileNames = new ArrayList<>();
         currentFile = null;
         wasModified = false;
     }
 
-    public Dictionary(String fileName) throws IOException {
+    public InvertedIndexDictionary(String fileName) throws IOException {
         readFrom(fileName);
     }
 
@@ -121,20 +121,110 @@ public class Dictionary {
         reader.close();
     }
 
-    public List<String> getFileNames() {
-        return new ArrayList<>(fileNames);
+    public List<String> query(String query){
+        String[] tokens = query.split(" ");
+        LinkedList<List<Integer>> valStack = new LinkedList<>();
+        LinkedList<String> opStack = new LinkedList<>();
+        for(String token : tokens){
+            switch(token){
+                case "AND":
+                    while(!opStack.isEmpty()){
+                        if(opStack.peek().equals("AND")){
+                            opStack.pop();
+                            valStack.push(and(valStack.pop(), valStack.pop()));
+                        }
+                    }
+                    opStack.push("AND");
+                    break;
+                case "OR":
+                    while(!opStack.isEmpty()){
+                        if(opStack.peek().equals("AND")){
+                            opStack.pop();
+                            valStack.push(and(valStack.pop(), valStack.pop()));
+                        }
+                        assert opStack.peek() != null;
+                        if(opStack.peek().equals("OR")){
+                            opStack.pop();
+                            valStack.push(or(valStack.pop(), valStack.pop()));
+                        }
+                    }
+                    opStack.push("OR");
+                    break;
+                case "NOT":
+                    opStack.push("NOT");
+                    break;
+                default:
+                    if(opStack.peek() != null && opStack.peek().equals("NOT")){
+                        opStack.pop();
+                        valStack.push(not(getPresences(token)));
+                    } else {
+                        valStack.push(getPresences(token));
+                    }
+                    break;
+            }
+        }
+        List<String> res = new LinkedList<>();
+        assert valStack.peek() != null;
+        for(int id : valStack.peek()){
+            res.add(fileNames.get(id));
+        }
+        return res;
     }
 
-    public int getNumOfWords() {
-        return dictionary.size();
+    private List<Integer> and(List<Integer> a, List<Integer> b){
+        List<Integer> result = new ArrayList<>();
+        int i1 = 0, i2 = 0;
+        while(i1 < a.size() && i2 < b.size()){
+            int val1 = a.get(i1), val2 = b.get(i2);
+            if(val1 > val2){
+                i2++;
+            } else if(val1 < val2){
+                i1++;
+            } else {
+                result.add(val1);
+                i2++;
+                i1++;
+            }
+        }
+        return result;
     }
 
-    public boolean containsWord(String word) {
-        return dictionary.containsKey(word);
+    private List<Integer> or(List<Integer> a, List<Integer> b){
+        List<Integer> result = new ArrayList<>();
+        int i1 = 0, i2 = 0;
+        while(i1 < a.size() && i2 < b.size()){
+            int val1 = a.get(i1), val2 = b.get(i2);
+            if(val1 > val2){
+                i2++;
+                result.add(val2);
+            } else if(val1 < val2){
+                i1++;
+                result.add(val1);
+            } else {
+                result.add(val1);
+                i2++;
+                i1++;
+            }
+        }
+        return result;
     }
 
-    public boolean fileContainsWord(String fileName, String word) {
-        int index = fileNames.indexOf(fileName);
-        return dictionary.containsKey(word) && dictionary.get(word).contains(index);
+    private List<Integer> not(List<Integer> list){
+        if (list == null || list.isEmpty()) return Collections.emptyList();
+        HashSet<Integer> set = new HashSet<>(list);
+        List<Integer> result = new LinkedList<>();
+        for(int i = 0; i < fileNames.size(); i++){
+            if(set.contains(i)) continue;
+            result.add(i);
+        }
+        return result;
+    }
+
+    private List<Integer> getPresences(String term){
+        Set<Integer> set = dictionary.get(term);
+        if(set == null) return Collections.emptyList();
+        LinkedList<Integer> files = new LinkedList<>(set);
+        Collections.sort(files);
+        return files;
     }
 }
