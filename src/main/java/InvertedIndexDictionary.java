@@ -1,3 +1,5 @@
+import opennlp.tools.stemmer.PorterStemmer;
+
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -45,7 +47,8 @@ public class InvertedIndexDictionary {
     }
 
     private String normalize(String word){
-        return word.toLowerCase();
+        PorterStemmer stemmer = new PorterStemmer();
+        return stemmer.stem(word.toLowerCase());
     }
 
     public void save() throws IOException {
@@ -221,7 +224,7 @@ public class InvertedIndexDictionary {
     }
 
     private List<Integer> getPresences(String term){
-        Set<Integer> set = dictionary.get(term);
+        Set<Integer> set = dictionary.get(normalize(term));
         if(set == null) return Collections.emptyList();
         LinkedList<Integer> files = new LinkedList<>(set);
         Collections.sort(files);

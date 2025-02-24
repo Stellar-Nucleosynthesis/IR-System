@@ -2,6 +2,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import opennlp.tools.stemmer.PorterStemmer;
 
 public class IncidenceMatrixDictionary {
     public IncidenceMatrixDictionary(){
@@ -52,7 +53,8 @@ public class IncidenceMatrixDictionary {
     }
 
     private String normalize(String word){
-        return word.toLowerCase();
+        PorterStemmer stemmer = new PorterStemmer();
+        return stemmer.stem(word.toLowerCase());
     }
 
     public void save() throws IOException {
@@ -179,11 +181,11 @@ public class IncidenceMatrixDictionary {
                 default:
                     if(opStack.peek() != null && opStack.peek().equals("NOT")){
                         opStack.pop();
-                        BitSet bits = matrix.get(words.get(token));
+                        BitSet bits = getArr(token);
                         bits.flip(0, bits.size());
                         valStack.push(bits);
                     } else {
-                        valStack.push(matrix.get(words.get(token)));
+                        valStack.push(getArr(token));
                     }
                     break;
             }
@@ -196,5 +198,10 @@ public class IncidenceMatrixDictionary {
             }
         }
         return res;
+    }
+
+    BitSet getArr(String word){
+        int index = words.get(normalize(word));
+        return matrix.get(index);
     }
 }
