@@ -1,7 +1,9 @@
+package FileParser;
+
 import java.io.*;
 
 public class FileParserBuilder {
-    static FileParser getFileParser(File file) throws IOException {
+    public static FileParser getFileParser(File file) throws IOException {
         try{
             if(file.getAbsolutePath().endsWith(".txt")){
                 return new txtParser(file);

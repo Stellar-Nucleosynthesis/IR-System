@@ -1,31 +1,28 @@
+import FileParser.*;
+import QuerySystem.Dictionary;
+import QuerySystem.QueryResult;
 import opennlp.tools.stemmer.PorterStemmer;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-public class InvertedIndexDictionary {
-    public InvertedIndexDictionary(){
+public class InvertedIndexDictionary implements Dictionary {
+    InvertedIndexDictionary() {
+        fileNames = new LinkedList<>();
         dictionary = new HashMap<>();
-        fileNames = new ArrayList<>();
-        currentFile = null;
-        wasModified = false;
-    }
-
-    public InvertedIndexDictionary(String fileName) throws IOException {
-        readFrom(fileName);
     }
 
     private List<String> fileNames;
 
     private Map<String, HashSet<Integer>> dictionary;
 
-    private File currentFile;
-
-    private boolean wasModified;
-
-    public void analyzeFile(String fileName) throws IOException {
+    @Override
+    public void analyze(String fileName) throws IOException {
         FileParser br = FileParserBuilder.getFileParser(new File(fileName));
         int fileID = fileNames.size();
         fileNames.add(fileName);
@@ -39,7 +36,6 @@ public class InvertedIndexDictionary {
                     word = normalize(word);
                     dictionary.putIfAbsent(word, new HashSet<>());
                     dictionary.get(word).add(fileID);
-                    wasModified = true;
                 }
             }
             line = br.readLine();
@@ -51,22 +47,11 @@ public class InvertedIndexDictionary {
         return stemmer.stem(word.toLowerCase());
     }
 
-    public void save() throws IOException {
-        if(currentFile == null)
-            throw new IOException("No destination file for saving specified");
-        if(!wasModified) return;
-        saveAs(currentFile.getAbsolutePath());
-    }
-
+    @Override
     public void saveAs(String fileName) throws IOException {
-        if(fileName == null){
-            throw new IOException("No destination file for saving specified");
-        } else {
-            if(!fileName.endsWith(".dict0"))
-                fileName += ".dict0";
-            currentFile = new File(fileName);
-        }
-        BufferedWriter writer = new BufferedWriter(new FileWriter(currentFile));
+        if(!fileName.endsWith(".iid0"))
+            fileName += ".iid0";
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
         String fileList = "";
         for(String file : fileNames){
             fileList += file + "\t";
@@ -81,15 +66,13 @@ public class InvertedIndexDictionary {
             writer.write(line);
         }
         writer.flush();
-        wasModified = false;
         writer.close();
     }
 
-    public void readFrom(String fileName) throws IOException {
-        if(dictionary != null && !dictionary.isEmpty() && wasModified) save();
-        if(!fileName.endsWith(".dict0")) throw new IOException("Wrong file format");
-        currentFile = new File(fileName);
-        BufferedReader reader = new BufferedReader(new FileReader(currentFile));
+    @Override
+    public void loadFrom(String fileName) throws IOException {
+        if(!fileName.endsWith(".iid0")) throw new IOException("Wrong file format");
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
         dictionary = new HashMap<>();
         fileNames = new ArrayList<>();
         int lineNum = 1;
@@ -120,114 +103,71 @@ public class InvertedIndexDictionary {
             lineNum++;
             line = reader.readLine();
         }
-        wasModified = false;
         reader.close();
     }
 
-    public List<String> query(String query){
-        String[] tokens = query.split(" ");
-        LinkedList<List<Integer>> valStack = new LinkedList<>();
-        LinkedList<String> opStack = new LinkedList<>();
-        for(String token : tokens){
-            switch(token){
-                case "AND":
-                    while(!opStack.isEmpty()){
-                        if(opStack.peek().equals("AND")){
-                            opStack.pop();
-                            valStack.push(and(valStack.pop(), valStack.pop()));
-                        }
-                    }
-                    opStack.push("AND");
-                    break;
-                case "OR":
-                    while(!opStack.isEmpty()){
-                        if(opStack.peek().equals("AND")){
-                            opStack.pop();
-                            valStack.push(and(valStack.pop(), valStack.pop()));
-                        }
-                        assert opStack.peek() != null;
-                        if(opStack.peek().equals("OR")){
-                            opStack.pop();
-                            valStack.push(or(valStack.pop(), valStack.pop()));
-                        }
-                    }
-                    opStack.push("OR");
-                    break;
-                case "NOT":
-                    opStack.push("NOT");
-                    break;
-                default:
-                    if(opStack.peek() != null && opStack.peek().equals("NOT")){
-                        opStack.pop();
-                        valStack.push(not(getPresences(token)));
-                    } else {
-                        valStack.push(getPresences(token));
-                    }
-                    break;
-            }
-        }
-        List<String> res = new LinkedList<>();
-        assert valStack.peek() != null;
-        for(int id : valStack.peek()){
-            res.add(fileNames.get(id));
-        }
-        return res;
-    }
-
-    private List<Integer> and(List<Integer> a, List<Integer> b){
-        List<Integer> result = new ArrayList<>();
-        int i1 = 0, i2 = 0;
-        while(i1 < a.size() && i2 < b.size()){
-            int val1 = a.get(i1), val2 = b.get(i2);
-            if(val1 > val2){
-                i2++;
-            } else if(val1 < val2){
-                i1++;
-            } else {
-                result.add(val1);
-                i2++;
-                i1++;
-            }
-        }
-        return result;
-    }
-
-    private List<Integer> or(List<Integer> a, List<Integer> b){
-        List<Integer> result = new ArrayList<>();
-        int i1 = 0, i2 = 0;
-        while(i1 < a.size() && i2 < b.size()){
-            int val1 = a.get(i1), val2 = b.get(i2);
-            if(val1 > val2){
-                i2++;
-                result.add(val2);
-            } else if(val1 < val2){
-                i1++;
-                result.add(val1);
-            } else {
-                result.add(val1);
-                i2++;
-                i1++;
-            }
-        }
-        return result;
-    }
-
-    private List<Integer> not(List<Integer> list){
-        if (list == null || list.isEmpty()) return Collections.emptyList();
-        HashSet<Integer> set = new HashSet<>(list);
-        List<Integer> result = new LinkedList<>();
-        for(int i = 0; i < fileNames.size(); i++){
-            if(set.contains(i)) continue;
-            result.add(i);
-        }
-        return result;
-    }
-
-    private List<Integer> getPresences(String term){
-        Set<Integer> set = dictionary.get(normalize(term));
-        if(set == null) return Collections.emptyList();
+    @Override
+    public QueryResult findWord(String word) {
+        Set<Integer> set = dictionary.get(normalize(word));
+        if(set == null) return new InvIndQueryResult(null);
         LinkedList<Integer> files = new LinkedList<>(set);
         Collections.sort(files);
-        return files;
+        return new InvIndQueryResult(files);
+    }
+
+    @Override
+    public QueryResult findPhrase(String phrase) {
+        return null;
+    }
+
+    @Override
+    public QueryResult findWordsWithin(String word1, String word2, int n) {
+        return null;
+    }
+
+    private class InvIndQueryResult implements QueryResult {
+        InvIndQueryResult(List<Integer> postings){
+            this.postings = Objects.requireNonNullElseGet(postings, LinkedList::new);
+        }
+
+        List<Integer> postings;
+
+        @Override
+        public void and(QueryResult other) {
+            checkParam(other);
+            postings = postings.stream()
+                    .filter(((InvIndQueryResult)other).postings::contains)
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public void or(QueryResult other) {
+            checkParam(other);
+            postings = Stream.concat(postings.stream(), ((InvIndQueryResult)other).postings.stream())
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        private void checkParam(QueryResult other) {
+            if(!(other instanceof InvIndQueryResult))
+                throw new IllegalCallerException("The parameter must be of the same class!");
+        }
+
+        @Override
+        public void not() {
+            postings = IntStream.rangeClosed(0, fileNames.size())
+                    .filter(i -> !postings.contains(i))
+                    .boxed()
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public String[] value() {
+            String[] result = new String[postings.size()];
+            int index = 0;
+            for(int i : postings)
+                result[index++] = fileNames.get(i);
+            return result;
+        }
     }
 }

@@ -1,3 +1,5 @@
+package FileParser;
+
 import java.io.IOException;
 
 public interface FileParser {
