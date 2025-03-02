@@ -17,9 +17,9 @@ public class InvertedIndexDictionary implements Dictionary {
         dictionary = new HashMap<>();
     }
 
-    private List<String> fileNames;
+    protected List<String> fileNames;
 
-    private Map<String, HashSet<Integer>> dictionary;
+    protected Map<String, HashSet<Integer>> dictionary;
 
     @Override
     public void analyze(String fileName) throws IOException {
@@ -28,21 +28,29 @@ public class InvertedIndexDictionary implements Dictionary {
         fileNames.add(fileName);
         String line = br.readLine();
         while (line != null) {
-            Pattern pattern = Pattern.compile("[a-zA-Z0-9-'`]*");
-            Matcher matcher = pattern.matcher(line);
-            while(matcher.find()) {
-                String word = matcher.group();
-                if(!word.isEmpty()){
-                    word = normalize(word);
-                    dictionary.putIfAbsent(word, new HashSet<>());
-                    dictionary.get(word).add(fileID);
-                }
+            for(String word : tokenize(line)) {
+                dictionary.putIfAbsent(word, new HashSet<>());
+                dictionary.get(word).add(fileID);
             }
             line = br.readLine();
         }
     }
 
-    private String normalize(String word){
+    protected List<String> tokenize(String line) {
+        List<String> result = new ArrayList<>();
+        Pattern pattern = Pattern.compile("[a-zA-Z0-9-'`]*");
+        Matcher matcher = pattern.matcher(line);
+        while(matcher.find()) {
+            String word = matcher.group();
+            if(!word.isEmpty()){
+                word = normalize(word);
+                result.add(word);
+            }
+        }
+        return result;
+    }
+
+    protected String normalize(String word){
         PorterStemmer stemmer = new PorterStemmer();
         return stemmer.stem(word.toLowerCase());
     }
@@ -125,7 +133,7 @@ public class InvertedIndexDictionary implements Dictionary {
         return null;
     }
 
-    private class InvIndQueryResult implements QueryResult {
+    protected class InvIndQueryResult implements QueryResult {
         InvIndQueryResult(List<Integer> postings){
             this.postings = Objects.requireNonNullElseGet(postings, LinkedList::new);
         }
@@ -155,7 +163,7 @@ public class InvertedIndexDictionary implements Dictionary {
 
         @Override
         public void not() {
-            postings = IntStream.rangeClosed(0, fileNames.size())
+            postings = IntStream.rangeClosed(0, fileNames.size() - 1)
                     .filter(i -> !postings.contains(i))
                     .boxed()
                     .collect(Collectors.toList());

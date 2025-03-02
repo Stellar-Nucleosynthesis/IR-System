@@ -217,20 +217,20 @@ public class CoordinateIndexDictionary implements Dictionary {
         public void and(QueryResult other) {
             checkParam(other);
             postings = postings.stream()
-                    .filter(((CoordinateIndexDictionary.CoordIndQueryResult)other).postings::contains)
+                    .filter(((CoordIndQueryResult)other).postings::contains)
                     .collect(Collectors.toList());
         }
 
         @Override
         public void or(QueryResult other) {
             checkParam(other);
-            postings = Stream.concat(postings.stream(), ((CoordinateIndexDictionary.CoordIndQueryResult)other).postings.stream())
+            postings = Stream.concat(postings.stream(), ((CoordIndQueryResult)other).postings.stream())
                     .distinct()
                     .collect(Collectors.toList());
         }
 
         private void checkParam(QueryResult other) {
-            if(!(other instanceof CoordinateIndexDictionary.CoordIndQueryResult))
+            if(!(other instanceof CoordIndQueryResult))
                 throw new IllegalCallerException("The parameter must be of the same class!");
         }
 
