@@ -3,5 +3,5 @@ package FileParser;
 import java.io.IOException;
 
 public interface FileParser {
-    public String readLine() throws IOException;
+    String readLine() throws IOException;
 }

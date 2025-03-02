@@ -236,7 +236,7 @@ public class CoordinateIndexDictionary implements Dictionary {
 
         @Override
         public void not() {
-            postings = IntStream.rangeClosed(0, fileNames.size())
+            postings = IntStream.rangeClosed(0, fileNames.size() - 1)
                     .filter(i -> !postings.contains(i))
                     .boxed()
                     .collect(Collectors.toList());

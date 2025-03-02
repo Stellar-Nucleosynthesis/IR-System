@@ -58,6 +58,10 @@ public class PhrasalBooleanRetrQueryParser implements QueryParser {
                 index += 2;
                 return new Token(Token.Type.OR, "OR");
             }
+            if (input.startsWith("NOT", index)) {
+                index += 3;
+                return new Token(Token.Type.NOT, "NOT");
+            }
             if (input.startsWith("WITHIN", index)) {
                 index += 6;
                 return new Token(Token.Type.WITHIN, "WITHIN");
