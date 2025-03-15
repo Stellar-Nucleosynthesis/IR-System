@@ -34,7 +34,7 @@ public class IndexingThread implements Runnable {
 
     private final HashMap<String, List<Integer>> buffer;
     private int logsInMemory = 0;
-    private static final int MAX_SIZE = 50_000_000;
+    private static final int MAX_SIZE = 100_000;
 
     private final File tempFileDir;
     private final List<File> tempFiles;
@@ -78,6 +78,7 @@ public class IndexingThread implements Runnable {
 
     private void writeBufferToFile() throws IOException {
         List<String> terms = new ArrayList<>(buffer.keySet());
+        Collections.sort(terms);
         File tempFile = new File(tempFileDir, "temp_" + tempFiles.size() + ".bin");
         tempFiles.add(tempFile);
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));

@@ -14,6 +14,7 @@ public class Main {
 
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
+        System.out.println("INDEX CONSTRUCTED");
         System.out.println("DURATION: " + duration / 1_000_000_000 + " s");
     }
 
@@ -31,9 +32,9 @@ public class Main {
             if (files != null) {
                 for (File file : files) {
                     if (file.isDirectory()) {
-                        fileList.addAll(listFilesRecursive(file)); // Рекурсивний виклик для піддиректорії
+                        fileList.addAll(listFilesRecursive(file));
                     } else {
-                        fileList.add(file); // Додаємо файл до списку
+                        fileList.add(file);
                     }
                 }
             }

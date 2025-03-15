@@ -24,16 +24,6 @@ public class ThreadedDictionary implements Dictionary {
     private final ThreadedDictionaryReader reader;
 
     @Override
-    public void saveAs(File file) throws IOException {
-        throw new UnsupportedOperationException("The dictionary is already saved!");
-    }
-
-    @Override
-    public void loadFrom(File file) throws IOException {
-        throw new UnsupportedOperationException("Unable to load another dictionary!");
-    }
-
-    @Override
     public QueryResult findWord(String word) {
         word = normalize(word);
         try{

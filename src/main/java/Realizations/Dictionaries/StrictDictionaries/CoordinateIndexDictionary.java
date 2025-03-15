@@ -44,7 +44,6 @@ public class CoordinateIndexDictionary implements Dictionary {
         br.close();
     }
 
-    @Override
     public void saveAs(File file) throws IOException {
         if(!file.getAbsolutePath().endsWith(".cid0"))
             file = new File(file.getAbsolutePath() + ".cid0");
@@ -69,7 +68,6 @@ public class CoordinateIndexDictionary implements Dictionary {
         writer.close();
     }
 
-    @Override
     public void loadFrom(File file) throws IOException {
         if(!file.getAbsolutePath().endsWith(".cid0")) throw new IOException("Wrong file format");
         BufferedReader reader = new BufferedReader(new FileReader(file));
