@@ -13,10 +13,8 @@ public class Main {
 
         queryTest2();
 
-
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
-        System.out.println("Index constructed");
         System.out.println("DURATION: " + duration / 1_000_000_000 + " s");
     }
 
@@ -30,7 +28,6 @@ public class Main {
             while (line != null) {
                 String[] tokens = line.split("\t");
                 terms.add(tokens[0]);
-                System.out.println(tokens[0]);
                 line = termIDbr.readLine();
             }
             termIDbr.close();
@@ -44,10 +41,10 @@ public class Main {
 //        ThreadedDictionaryBuilder dict = new ThreadedDictionaryBuilder(cwd, listFilesRecursive(bookDir), 10);
 //        dict.startAnalysis();
         ThreadedDictionary dict = new ThreadedDictionary(cwd, 10);
-        String[] words = {"georgia", "superman", "geschenk", "injection", "tablet"};
+        String[] words = {"georgia", "a", "the", "of", "on"};
         for(int i = 0; i < 5; i++) {
             long startTime = System.nanoTime();
-            String[] res = dict.findWord("Himalayan").value();
+            dict.findWord(words[i]).value();
             //System.out.println(Arrays.toString(res));
 
             long endTime = System.nanoTime();
