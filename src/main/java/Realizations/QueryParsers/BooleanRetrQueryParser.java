@@ -1,8 +1,9 @@
-package QueryParsers;
+package Realizations.QueryParsers;
 
 import QuerySystem.Dictionary;
 import QuerySystem.QueryParser;
 import QuerySystem.QueryResult;
+
 import java.util.LinkedList;
 
 public class BooleanRetrQueryParser implements QueryParser {

@@ -1,31 +1,36 @@
-import FileParser.*;
+package Realizations.Dictionaries.StrictDictionaries;
+
+import FileParsingUtils.FileParser;
+import FileParsingUtils.FileParserBuilder;
 import QuerySystem.Dictionary;
 import QuerySystem.QueryResult;
-import opennlp.tools.stemmer.PorterStemmer;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static FileParsingUtils.StemmingStringTokenizer.normalize;
+import static FileParsingUtils.StemmingStringTokenizer.tokenize;
+
 public class InvertedIndexDictionary implements Dictionary {
-    InvertedIndexDictionary() {
+    InvertedIndexDictionary(List<File> targetFiles) throws IOException {
         fileNames = new LinkedList<>();
         dictionary = new HashMap<>();
+        for (File targetFile : targetFiles) {
+            analyze(targetFile);
+        }
     }
 
     protected List<String> fileNames;
 
     protected Map<String, HashSet<Integer>> dictionary;
 
-    @Override
-    public void analyze(String fileName) throws IOException {
-        FileParser br = FileParserBuilder.getFileParser(new File(fileName));
+    protected void analyze(File file) throws IOException {
+        FileParser br = FileParserBuilder.getFileParser(file);
         int fileID = fileNames.size();
-        fileNames.add(fileName);
+        fileNames.add(file.getAbsolutePath());
         String line = br.readLine();
         while (line != null) {
             for(String word : tokenize(line)) {
@@ -34,35 +39,17 @@ public class InvertedIndexDictionary implements Dictionary {
             }
             line = br.readLine();
         }
-    }
-
-    protected List<String> tokenize(String line) {
-        List<String> result = new ArrayList<>();
-        Pattern pattern = Pattern.compile("[a-zA-Z0-9-'`]*");
-        Matcher matcher = pattern.matcher(line);
-        while(matcher.find()) {
-            String word = matcher.group();
-            if(!word.isEmpty()){
-                word = normalize(word);
-                result.add(word);
-            }
-        }
-        return result;
-    }
-
-    protected String normalize(String word){
-        PorterStemmer stemmer = new PorterStemmer();
-        return stemmer.stem(word.toLowerCase());
+        br.close();
     }
 
     @Override
-    public void saveAs(String fileName) throws IOException {
-        if(!fileName.endsWith(".iid0"))
-            fileName += ".iid0";
-        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+    public void saveAs(File file) throws IOException {
+        if(!file.getAbsolutePath().endsWith(".iid0"))
+            file = new File(file.getAbsolutePath() + ".iid0");
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         String fileList = "";
-        for(String file : fileNames){
-            fileList += file + "\t";
+        for(String fileName : fileNames){
+            fileList += fileName + "\t";
         }
         fileList += '\n';
         writer.write(fileList);
@@ -78,19 +65,19 @@ public class InvertedIndexDictionary implements Dictionary {
     }
 
     @Override
-    public void loadFrom(String fileName) throws IOException {
-        if(!fileName.endsWith(".iid0")) throw new IOException("Wrong file format");
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+    public void loadFrom(File file) throws IOException {
+        if(!file.getAbsolutePath().endsWith(".iid0")) throw new IOException("Wrong file format");
+        BufferedReader reader = new BufferedReader(new FileReader(file));
         dictionary = new HashMap<>();
         fileNames = new ArrayList<>();
         int lineNum = 1;
 
         String line = reader.readLine();
         String[] files = line.split("\t");
-        for(String file : files){
-            if(file.isEmpty())
+        for(String fileName : files){
+            if(fileName.isEmpty())
                 throw new IOException("Error in " + fileName + ", line " + lineNum + ": Empty file name");
-            fileNames.add(file);
+            fileNames.add(fileName);
         }
         line = reader.readLine();
 
@@ -98,14 +85,14 @@ public class InvertedIndexDictionary implements Dictionary {
             String[] tokens = line.split("\t");
             String name = tokens[0];
             if(name.isEmpty())
-                throw new IOException("Error in " + fileName + ", line " + lineNum + ": Empty token");
+                throw new IOException("Error in " + file.getAbsolutePath() + ", line " + lineNum + ": Empty token");
             if(dictionary.containsKey(name))
-                throw new IOException("Error in " + fileName + ", line " + lineNum + ": Duplicate token");
+                throw new IOException("Error in " + file.getAbsolutePath() + ", line " + lineNum + ": Duplicate token");
             dictionary.put(name, new HashSet<>());
             for(int i = 1; i < tokens.length; i++){
                 int fileId = Integer.parseInt(tokens[i]);
                 if(fileId > fileNames.size() || fileId < 0)
-                    throw new IOException("Error in " + fileName + ", line " + lineNum + ": Invalid fileID");
+                    throw new IOException("Error in " + file.getAbsolutePath() + ", line " + lineNum + ": Invalid fileID");
                 dictionary.get(name).add(fileId);
             }
             lineNum++;

@@ -1,11 +1,11 @@
 package QuerySystem;
 
+import java.io.File;
 import java.io.IOException;
 
 public interface Dictionary {
-    void analyze(String fileName) throws IOException;
-    void saveAs(String fileName) throws IOException;
-    void loadFrom(String fileName) throws IOException;
+    void saveAs(File file) throws IOException;
+    void loadFrom(File file) throws IOException;
 
     QueryResult findWord(String word);
     QueryResult findPhrase(String phrase);

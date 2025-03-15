@@ -1,4 +1,4 @@
-package QueryParsers;
+package Realizations.QueryParsers;
 
 import QuerySystem.Dictionary;
 import QuerySystem.QueryParser;

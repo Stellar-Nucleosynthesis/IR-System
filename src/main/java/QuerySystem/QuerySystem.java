@@ -1,5 +1,6 @@
 package QuerySystem;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -9,18 +10,13 @@ public class QuerySystem{
         this.parser = parser;
     }
 
-    Dictionary dictionary;
+    private final Dictionary dictionary;
 
-    QueryParser parser;
+    private final QueryParser parser;
 
-    String currentFile;
+    private File currentFile;
 
     boolean dictionaryChanged = false;
-
-    public void analyze(String fileName) throws IOException{
-        dictionary.analyze(fileName);
-        dictionaryChanged = true;
-    }
 
     public void save() throws IOException{
         if(currentFile == null){
@@ -29,18 +25,18 @@ public class QuerySystem{
         saveAs(currentFile);
     }
 
-    public void saveAs(String fileName) throws IOException{
-        if(fileName == null)
+    public void saveAs(File file) throws IOException{
+        if(file == null)
             throw new FileNotFoundException("File name is null");
-        if(fileName.equals(currentFile) && !dictionaryChanged)
+        if(file.equals(currentFile) && !dictionaryChanged)
             return;
-        currentFile = fileName;
-        dictionary.saveAs(fileName);
+        currentFile = file;
+        dictionary.saveAs(file);
         dictionaryChanged = false;
     }
 
-    public void loadFrom(String fileName) throws IOException{
-        dictionary.loadFrom(fileName);
+    public void loadFrom(File file) throws IOException{
+        dictionary.loadFrom(file);
     }
 
     public String[] query(String query){

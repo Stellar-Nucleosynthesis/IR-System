@@ -1,15 +1,26 @@
-import FileParser.*;
+package Realizations.Dictionaries.StrictDictionaries;
+
+import FileParsingUtils.FileParser;
+import FileParsingUtils.FileParserBuilder;
 import QuerySystem.QueryResult;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+
+import static FileParsingUtils.StemmingStringTokenizer.tokenize;
 
 public class BWordIndexDictionary extends InvertedIndexDictionary {
+    BWordIndexDictionary(List<File> targetFiles) throws IOException {
+        super(targetFiles);
+    }
+
     @Override
-    public void analyze(String fileName) throws IOException {
-        FileParser br = FileParserBuilder.getFileParser(new File(fileName));
+    protected void analyze(File file) throws IOException {
+        FileParser br = FileParserBuilder.getFileParser(file);
         int fileID = fileNames.size();
-        fileNames.add(fileName);
+        fileNames.add(file.getAbsolutePath());
         String line = br.readLine();
         String prevWord = null;
         while (line != null) {
@@ -24,6 +35,7 @@ public class BWordIndexDictionary extends InvertedIndexDictionary {
             }
             line = br.readLine();
         }
+        br.close();
     }
 
     @Override

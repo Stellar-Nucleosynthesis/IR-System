@@ -1,4 +1,4 @@
-package FileParser;
+package FileParsingUtils;
 
 import java.io.*;
 
@@ -10,7 +10,7 @@ public class FileParserBuilder {
             }
             throw new Exception();
         } catch (Exception e){
-            throw new IOException("Unable to create a file parser");
+            throw new IOException("Unable to create a file parser" + " " + file.getAbsolutePath());
         }
     }
 
@@ -23,6 +23,10 @@ public class FileParserBuilder {
 
         public String readLine() throws IOException {
             return reader.readLine();
+        }
+
+        public void close() throws IOException {
+            reader.close();
         }
     }
 }
