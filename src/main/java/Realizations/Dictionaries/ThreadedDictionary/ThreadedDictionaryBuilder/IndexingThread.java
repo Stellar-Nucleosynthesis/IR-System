@@ -7,35 +7,34 @@ import FileParsingUtils.StemmingStringTokenizer;
 import java.io.*;
 import java.util.*;
 
-public class MapReduceThread implements Runnable {
-    MapReduceThread(File workingDir, List<File> targetFiles, int threadID){
+public class IndexingThread implements Runnable {
+    IndexingThread(File workingDir, List<File> targetFiles, int threadID){
         this.targetFiles = targetFiles;
-        this.termIDs = new HashMap<>();
         this.postingAddresses = new HashMap<>();
         this.fileIDs = new HashMap<>();
         this.outputFile = new File(workingDir, "group" + threadID + "_output.txt");
         this.fileIDsFile = new File(workingDir, "group" + threadID + "fileIDs.txt");
-        this.termIDsFile = new File(workingDir, "group" + threadID + "termIDs.txt");
+        this.postingAddrFile = new File(workingDir, "group" + threadID + "postingAddr.txt");
         File cwd = new File(workingDir, "group" + threadID + "_temp_dir");
         if(!cwd.exists()) {
             boolean res = cwd.mkdir();
         }
         this.tempFileDir = cwd;
-        buffer = new ArrayList<>();
+        buffer = new HashMap<>();
         tempFiles = new ArrayList<>();
     }
 
     private final List<File> targetFiles;
     private final File outputFile;
 
-    private final Map<String, Integer> termIDs;
-    private final Map<Integer, Integer> postingAddresses;
+    private final Map<String, Integer> postingAddresses;
     private final Map<String, Integer> fileIDs;
     private final File fileIDsFile;
-    private final File termIDsFile;
+    private final File postingAddrFile;
 
-    private final List<Tuple> buffer;
-    private static final int BUFFER_SIZE = 0x1000000;
+    private final HashMap<String, List<Integer>> buffer;
+    private int logsInMemory = 0;
+    private static final int MAX_SIZE = 50_000_000;
 
     private final File tempFileDir;
     private final List<File> tempFiles;
@@ -47,7 +46,6 @@ public class MapReduceThread implements Runnable {
                 scanFile(targetFile);
             if(!buffer.isEmpty())
                 writeBufferToFile();
-            System.out.println("Buffers written to file");
             constructIndex();
             saveIDs();
             clearUp();
@@ -70,45 +68,45 @@ public class MapReduceThread implements Runnable {
     }
 
     private void logWord(String word, int fileID) throws IOException {
-        termIDs.putIfAbsent(word, termIDs.size());
-        int termID = termIDs.get(word);
-        buffer.add(new Tuple(termID, fileID));
-        if(buffer.size() >= BUFFER_SIZE)
+        buffer.putIfAbsent(word, new ArrayList<>());
+        List<Integer> posting = buffer.get(word);
+        if(!posting.isEmpty() && posting.getLast() == fileID) return;
+        posting.add(fileID);
+        if(++logsInMemory >= MAX_SIZE)
             writeBufferToFile();
     }
 
     private void writeBufferToFile() throws IOException {
-        Collections.sort(buffer);
+        List<String> terms = new ArrayList<>(buffer.keySet());
         File tempFile = new File(tempFileDir, "temp_" + tempFiles.size() + ".bin");
         tempFiles.add(tempFile);
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));
-        Tuple prevTuple = null;
-        for (Tuple t : buffer) {
-            if(t.compareTo(prevTuple) != 0){
-                out.writeInt(t.termID);
-                out.writeInt(t.fileID);
-                prevTuple = t;
+        for (String term : terms) {
+            out.writeInt(term.length());
+            out.writeChars(term);
+            out.writeInt(buffer.get(term).size());
+            for(int fileID : buffer.get(term)){
+                out.writeInt(fileID);
             }
         }
         buffer.clear();
+        logsInMemory = 0;
         out.close();
     }
 
     private void constructIndex() throws IOException {
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
-        TuplePQ pq = new TuplePQ(tempFiles);
+        RecordPQ pq = new RecordPQ(tempFiles);
         int bytesWritten = 0;
         while(pq.hasNext()){
-            int currentTermID = pq.peek().termID;
-            List<Integer> posting = new ArrayList<>();
-            while(pq.hasNext() && pq.peek().termID == currentTermID){
-                int currentFileID = pq.peek().fileID;
-                while(pq.hasNext() && pq.peek().fileID == currentFileID && pq.peek().termID == currentTermID){
-                    pq.poll();
-                }
-                posting.add(currentFileID);
+            String currentTerm = pq.peekTerm();
+            List<Integer> posting = pq.peekPosting();
+            pq.poll();
+            while(pq.hasNext() && pq.peekTerm().equals(currentTerm)){
+                posting.addAll(pq.peekPosting());
+                pq.poll();
             }
-            postingAddresses.put(currentTermID, bytesWritten);
+            postingAddresses.put(currentTerm, bytesWritten);
             out.writeInt(posting.size());
             for(int num : posting){
                 out.writeInt(num);
@@ -118,24 +116,23 @@ public class MapReduceThread implements Runnable {
         out.close();
     }
 
-    private static class TuplePQ{
-        TuplePQ(List<File> files) throws IOException {
-            pq = new PriorityQueue<>(Comparator.comparing(o -> o.current));
+    private static class RecordPQ{
+        RecordPQ(List<File> files) throws IOException {
+            pq = new PriorityQueue<>(Comparator.comparing(o -> o.term));
             for (File file : files) {
-                BufferedTupleReader reader = new BufferedTupleReader(file);
+                BufferedRecordReader reader = new BufferedRecordReader(file);
                 if (reader.hasNext()) {
                     pq.add(reader);
                 }
             }
         }
 
-        private final PriorityQueue<BufferedTupleReader> pq;
+        private final PriorityQueue<BufferedRecordReader> pq;
 
         public void poll() throws IOException {
             if(!hasNext()) throw new NoSuchElementException();
-            BufferedTupleReader reader = pq.poll();
+            BufferedRecordReader reader = pq.poll();
             assert reader != null;
-            Tuple tuple = reader.current;
             reader.advance();
             if (reader.hasNext()) {
                 pq.add(reader);
@@ -144,10 +141,16 @@ public class MapReduceThread implements Runnable {
             }
         }
 
-        public Tuple peek(){
+        public String peekTerm(){
             if(!hasNext()) throw new NoSuchElementException();
             assert pq.peek() != null;
-            return pq.peek().current;
+            return pq.peek().term;
+        }
+
+        public List<Integer> peekPosting(){
+            if(!hasNext()) throw new NoSuchElementException();
+            assert pq.peek() != null;
+            return pq.peek().posting;
         }
 
         public boolean hasNext(){
@@ -156,12 +159,12 @@ public class MapReduceThread implements Runnable {
     }
 
     private void saveIDs() throws IOException {
-        BufferedWriter termIDbw = new BufferedWriter(new FileWriter(termIDsFile));
-        for(String word : termIDs.keySet()){
-            int termID = termIDs.get(word);
-            termIDbw.write(word + '\t' + postingAddresses.get(termID) + '\n');
+        BufferedWriter postingAddrbw = new BufferedWriter(new FileWriter(postingAddrFile));
+        for(String term : postingAddresses.keySet()){
+            int postingAddr = postingAddresses.get(term);
+            postingAddrbw.write(term + '\t' + postingAddr + '\n');
         }
-        termIDbw.close();
+        postingAddrbw.close();
         BufferedWriter fileIDbw = new BufferedWriter(new FileWriter(fileIDsFile));
         for(String file : fileIDs.keySet()){
             fileIDbw.write(file + '\t' + fileIDs.get(file) + '\n');

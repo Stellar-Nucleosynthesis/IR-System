@@ -21,7 +21,7 @@ public class ReadingThread implements Runnable {
         currentWordMutex = new Semaphore(1);
         this.indexFile = new File(cwd, "group" + threadID + "_output.txt");
         this.fileIDsFile = new File(cwd, "group" + threadID + "fileIDs.txt");
-        this.termIDsFile = new File(cwd, "group" + threadID + "termIDs.txt");
+        this.postingAddrFile = new File(cwd, "group" + threadID + "postingAddr.txt");
         timeToExit = false;
     }
 
@@ -40,7 +40,7 @@ public class ReadingThread implements Runnable {
 
     private final File indexFile;
     private final File fileIDsFile;
-    private final File termIDsFile;
+    private final File postingAddrFile;
     private final ConcurrentMap<Integer, String> fileByID;
     private final ConcurrentMap<String, Integer> postingAddresses;
 
@@ -100,7 +100,7 @@ public class ReadingThread implements Runnable {
     }
 
     private void initializeDataStructures() throws IOException {
-        BufferedReader termIDbr = new BufferedReader(new FileReader(termIDsFile));
+        BufferedReader termIDbr = new BufferedReader(new FileReader(postingAddrFile));
         String line = termIDbr.readLine();
         while (line != null) {
             String[] tokens = line.split("\t");

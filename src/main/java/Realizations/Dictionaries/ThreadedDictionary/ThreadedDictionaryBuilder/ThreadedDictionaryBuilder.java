@@ -29,7 +29,7 @@ public class ThreadedDictionaryBuilder {
                     threadTargetFiles.add(targetFiles.removeFirst());
                 }
             }
-            threads[i] = new Thread(new MapReduceThread(workingDir, threadTargetFiles, i));
+            threads[i] = new Thread(new IndexingThread(workingDir, threadTargetFiles, i));
             threads[i].start();
         }
         for (Thread thread : threads) {
