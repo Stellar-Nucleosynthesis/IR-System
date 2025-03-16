@@ -15,9 +15,9 @@ import static FileParsingUtils.StemmingStringTokenizer.normalize;
 import static FileParsingUtils.StemmingStringTokenizer.tokenize;
 
 public class InvertedIndexDictionary implements Dictionary {
-    InvertedIndexDictionary(List<File> targetFiles) throws IOException {
+    public InvertedIndexDictionary(List<File> targetFiles) throws IOException {
         fileNames = new LinkedList<>();
-        dictionary = new HashMap<>();
+        dictionary = new TreeMap<>();
         for (File targetFile : targetFiles) {
             analyze(targetFile);
         }
@@ -25,7 +25,7 @@ public class InvertedIndexDictionary implements Dictionary {
 
     protected List<String> fileNames;
 
-    protected Map<String, HashSet<Integer>> dictionary;
+    protected TreeMap<String, HashSet<Integer>> dictionary;
 
     protected void analyze(File file) throws IOException {
         FileParser br = FileParserBuilder.getFileParser(file);
@@ -66,7 +66,7 @@ public class InvertedIndexDictionary implements Dictionary {
     public void loadFrom(File file) throws IOException {
         if(!file.getAbsolutePath().endsWith(".iid0")) throw new IOException("Wrong file format");
         BufferedReader reader = new BufferedReader(new FileReader(file));
-        dictionary = new HashMap<>();
+        dictionary = new TreeMap<>();
         fileNames = new ArrayList<>();
         int lineNum = 1;
 
@@ -119,7 +119,7 @@ public class InvertedIndexDictionary implements Dictionary {
     }
 
     protected class InvIndQueryResult implements QueryResult {
-        InvIndQueryResult(List<Integer> postings){
+        public InvIndQueryResult(List<Integer> postings){
             this.postings = Objects.requireNonNullElseGet(postings, LinkedList::new);
         }
 

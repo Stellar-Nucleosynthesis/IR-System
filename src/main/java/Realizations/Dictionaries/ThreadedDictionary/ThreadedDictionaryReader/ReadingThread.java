@@ -77,7 +77,7 @@ public class ReadingThread implements Runnable {
 
     public void signalEnd() throws InterruptedException {
         timeToExitMutex.acquire();
-        timeToExit = false;
+        timeToExit = true;
         timeToExitMutex.release();
     }
 

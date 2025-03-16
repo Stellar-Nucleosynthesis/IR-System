@@ -34,7 +34,7 @@ public class IndexingThread implements Runnable {
 
     private final HashMap<String, List<Integer>> buffer;
     private int logsInMemory = 0;
-    private static final int MAX_SIZE = 100_000;
+    private static final int MAX_SIZE = 500_000;
 
     private final File tempFileDir;
     private final List<File> tempFiles;

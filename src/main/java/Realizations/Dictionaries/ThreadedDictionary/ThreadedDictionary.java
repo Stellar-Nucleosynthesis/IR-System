@@ -23,6 +23,10 @@ public class ThreadedDictionary implements Dictionary {
 
     private final ThreadedDictionaryReader reader;
 
+    public void close() throws InterruptedException {
+        reader.close();
+    }
+
     @Override
     public QueryResult findWord(String word) {
         word = normalize(word);
