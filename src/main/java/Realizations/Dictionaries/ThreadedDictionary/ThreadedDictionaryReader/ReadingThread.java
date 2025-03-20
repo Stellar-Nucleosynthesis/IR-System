@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 
+import static EncodingUtils.VaribleByteEncoding.readCodedInt;
+
 public class ReadingThread implements Runnable {
     ReadingThread(int threadID, File cwd, ThreadedDictionaryReader.ThreadedDictQueryResult result, Semaphore finishReport) {
         this.threadID = threadID;
@@ -125,10 +127,10 @@ public class ReadingThread implements Runnable {
         int postingAddress = postingAddresses.get(currentWord);
         DataInputStream out = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
         out.skipBytes(postingAddress);
-        int postingSize = out.readInt();
+        int postingSize = readCodedInt(out);
         List<Long> result = new ArrayList<>(postingSize);
         for (int i = 0; i < postingSize; i++) {
-            result.add(toGlobalID(out.readInt()));
+            result.add(toGlobalID(readCodedInt(out)));
         }
         return result;
     }

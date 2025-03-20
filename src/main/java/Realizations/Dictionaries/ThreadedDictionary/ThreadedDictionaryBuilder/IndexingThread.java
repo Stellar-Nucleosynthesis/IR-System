@@ -7,6 +7,8 @@ import FileParsingUtils.StemmingStringTokenizer;
 import java.io.*;
 import java.util.*;
 
+import static EncodingUtils.VaribleByteEncoding.writeCodedInt;
+
 public class IndexingThread implements Runnable {
     IndexingThread(File workingDir, List<File> targetFiles, int threadID){
         this.targetFiles = targetFiles;
@@ -34,7 +36,7 @@ public class IndexingThread implements Runnable {
 
     private final HashMap<String, List<Integer>> buffer;
     private int logsInMemory = 0;
-    private static final int MAX_SIZE = 500_000;
+    private static final int MAX_SIZE = 100_000;
 
     private final File tempFileDir;
     private final List<File> tempFiles;
@@ -83,11 +85,11 @@ public class IndexingThread implements Runnable {
         tempFiles.add(tempFile);
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));
         for (String term : terms) {
-            out.writeInt(term.length());
+            writeCodedInt(out, term.length());
             out.writeChars(term);
-            out.writeInt(buffer.get(term).size());
+            writeCodedInt(out, buffer.get(term).size());
             for(int fileID : buffer.get(term)){
-                out.writeInt(fileID);
+                writeCodedInt(out, fileID);
             }
         }
         buffer.clear();
@@ -108,11 +110,10 @@ public class IndexingThread implements Runnable {
                 pq.poll();
             }
             postingAddresses.put(currentTerm, bytesWritten);
-            out.writeInt(posting.size());
+            bytesWritten += writeCodedInt(out, posting.size());
             for(int num : posting){
-                out.writeInt(num);
+                bytesWritten += writeCodedInt(out, num);
             }
-            bytesWritten += Integer.BYTES * (posting.size() + 1);
         }
         out.close();
     }

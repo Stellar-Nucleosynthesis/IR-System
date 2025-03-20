@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static EncodingUtils.VaribleByteEncoding.readCodedInt;
+
 public class BufferedRecordReader {
     private final DataInputStream in;
     public String term;
@@ -20,21 +22,21 @@ public class BufferedRecordReader {
     }
 
     public void advance() throws IOException {
-        if (in.available() < Integer.BYTES * 4) {
+        if (in.available() < 2) {
             term = null;
             in.close();
             return;
         }
-        int stringLen = in.readInt();
+        int stringLen = readCodedInt(in);
         StringBuilder term = new StringBuilder();
         for (int i = 0; i < stringLen; i++) {
             term.append(in.readChar());
         }
         this.term = term.toString();
-        int postingLen = in.readInt();
+        int postingLen = readCodedInt(in);
         posting = new ArrayList<>();
         for (int i = 0; i < postingLen; i++) {
-            posting.add(in.readInt());
+            posting.add(readCodedInt(in));
         }
     }
 
