@@ -9,13 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 
-import static EncodingUtils.VaribleByteEncoding.readCodedInt;
+import static EncodingUtils.VariableByteEncoding.readCodedInt;
 
 public class ReadingThread implements Runnable {
     ReadingThread(int threadID, File cwd, ThreadedDictionaryReader.ThreadedDictQueryResult result, Semaphore finishReport) {
         this.threadID = threadID;
         this.fileByID = new ConcurrentHashMap<>();
-        this.postingAddresses = new ConcurrentHashMap<>();
         this.result = result;
         this.finishReport = finishReport;
         timeToExitMutex = new Semaphore(1);
@@ -44,7 +43,7 @@ public class ReadingThread implements Runnable {
     private final File fileIDsFile;
     private final File postingAddrFile;
     private final ConcurrentMap<Integer, String> fileByID;
-    private final ConcurrentMap<String, Integer> postingAddresses;
+    private CompressedTermToPosting postingAddresses;
 
     @Override
     public void run() {
@@ -102,16 +101,9 @@ public class ReadingThread implements Runnable {
     }
 
     private void initializeDataStructures() throws IOException {
-        BufferedReader termIDbr = new BufferedReader(new FileReader(postingAddrFile));
-        String line = termIDbr.readLine();
-        while (line != null) {
-            String[] tokens = line.split("\t");
-            postingAddresses.put(tokens[0], Integer.parseInt(tokens[1]));
-            line = termIDbr.readLine();
-        }
-        termIDbr.close();
+        this.postingAddresses = new CompressedTermToPosting(postingAddrFile);
         BufferedReader fileIDbr = new BufferedReader(new FileReader(fileIDsFile));
-        line = fileIDbr.readLine();
+        String line = fileIDbr.readLine();
         while (line != null) {
             String[] tokens = line.split("\t");
             fileByID.put(Integer.parseInt(tokens[1]), tokens[0]);
@@ -121,16 +113,19 @@ public class ReadingThread implements Runnable {
     }
 
     private List<Long> findEntries(String currentWord) throws IOException {
-        if(!postingAddresses.containsKey(currentWord)){
+        if(!postingAddresses.containsTerm(currentWord)){
             return new ArrayList<>();
         }
-        int postingAddress = postingAddresses.get(currentWord);
-        DataInputStream out = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
-        out.skipBytes(postingAddress);
-        int postingSize = readCodedInt(out);
+        int postingAddress = postingAddresses.getPostingAddr(currentWord);
+        DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
+        in.skipBytes(postingAddress);
+        int postingSize = readCodedInt(in);
         List<Long> result = new ArrayList<>(postingSize);
+        int prevNum = 0;
         for (int i = 0; i < postingSize; i++) {
-            result.add(toGlobalID(readCodedInt(out)));
+            int num = prevNum + readCodedInt(in);
+            prevNum = num;
+            result.add(toGlobalID(num));
         }
         return result;
     }

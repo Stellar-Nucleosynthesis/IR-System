@@ -7,7 +7,7 @@ import FileParsingUtils.StemmingStringTokenizer;
 import java.io.*;
 import java.util.*;
 
-import static EncodingUtils.VaribleByteEncoding.writeCodedInt;
+import static EncodingUtils.VariableByteEncoding.writeCodedInt;
 
 public class IndexingThread implements Runnable {
     IndexingThread(File workingDir, List<File> targetFiles, int threadID){
@@ -99,7 +99,7 @@ public class IndexingThread implements Runnable {
 
     private void constructIndex() throws IOException {
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
-        RecordPQ pq = new RecordPQ(tempFiles);
+        BlockRecordPQ pq = new BlockRecordPQ(tempFiles);
         int bytesWritten = 0;
         while(pq.hasNext()){
             String currentTerm = pq.peekTerm();
@@ -111,62 +111,18 @@ public class IndexingThread implements Runnable {
             }
             postingAddresses.put(currentTerm, bytesWritten);
             bytesWritten += writeCodedInt(out, posting.size());
+            int prevNum = 0;
+            Collections.sort(posting);
             for(int num : posting){
-                bytesWritten += writeCodedInt(out, num);
+                bytesWritten += writeCodedInt(out, num - prevNum);
+                prevNum = num;
             }
         }
         out.close();
     }
 
-    private static class RecordPQ{
-        RecordPQ(List<File> files) throws IOException {
-            pq = new PriorityQueue<>(Comparator.comparing(o -> o.term));
-            for (File file : files) {
-                BufferedRecordReader reader = new BufferedRecordReader(file);
-                if (reader.hasNext()) {
-                    pq.add(reader);
-                }
-            }
-        }
-
-        private final PriorityQueue<BufferedRecordReader> pq;
-
-        public void poll() throws IOException {
-            if(!hasNext()) throw new NoSuchElementException();
-            BufferedRecordReader reader = pq.poll();
-            assert reader != null;
-            reader.advance();
-            if (reader.hasNext()) {
-                pq.add(reader);
-            } else {
-                reader.close();
-            }
-        }
-
-        public String peekTerm(){
-            if(!hasNext()) throw new NoSuchElementException();
-            assert pq.peek() != null;
-            return pq.peek().term;
-        }
-
-        public List<Integer> peekPosting(){
-            if(!hasNext()) throw new NoSuchElementException();
-            assert pq.peek() != null;
-            return pq.peek().posting;
-        }
-
-        public boolean hasNext(){
-            return !pq.isEmpty();
-        }
-    }
-
     private void saveIDs() throws IOException {
-        BufferedWriter postingAddrbw = new BufferedWriter(new FileWriter(postingAddrFile));
-        for(String term : postingAddresses.keySet()){
-            int postingAddr = postingAddresses.get(term);
-            postingAddrbw.write(term + '\t' + postingAddr + '\n');
-        }
-        postingAddrbw.close();
+        TermToPostingCompressor.writeCompressedMapping(postingAddrFile, postingAddresses);
         BufferedWriter fileIDbw = new BufferedWriter(new FileWriter(fileIDsFile));
         for(String file : fileIDs.keySet()){
             fileIDbw.write(file + '\t' + fileIDs.get(file) + '\n');

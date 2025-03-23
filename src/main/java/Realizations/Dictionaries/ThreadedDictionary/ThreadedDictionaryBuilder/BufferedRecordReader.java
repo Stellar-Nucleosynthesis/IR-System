@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static EncodingUtils.VaribleByteEncoding.readCodedInt;
+import static EncodingUtils.VariableByteEncoding.readCodedInt;
 
 public class BufferedRecordReader {
     private final DataInputStream in;

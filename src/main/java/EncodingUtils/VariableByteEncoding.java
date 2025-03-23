@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class VaribleByteEncoding {
+public class VariableByteEncoding {
     public static int writeCodedInt(OutputStream stream, int value) throws IOException {
         int bytesWritten = 0;
         do{
