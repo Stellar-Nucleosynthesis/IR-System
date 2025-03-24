@@ -1,4 +1,4 @@
-package realizations.query_engines.threaded_query_engine.ThreadedDictionaryReader;
+package realizations.query_engines.threaded_query_engine.threaded_dictionary_reader;
 
 import utils.encoding_utils.BlockedCompressedDictionary;
 
@@ -16,35 +16,30 @@ import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 public class ReadingThread implements Runnable {
     ReadingThread(int threadID, File cwd, ThreadedDictionaryReader.ThreadedDictQueryResult result, Semaphore finishReport) {
         this.threadID = threadID;
-        this.fileByID = new ConcurrentHashMap<>();
         this.result = result;
         this.finishReport = finishReport;
-        timeToExitMutex = new Semaphore(1);
-        waitForTask = new Semaphore(0);
-        currentWordMutex = new Semaphore(1);
         this.indexFile = new File(cwd, "group" + threadID + "_output.txt");
         this.fileIDsFile = new File(cwd, "group" + threadID + "fileIDs.txt");
         this.postingAddrFile = new File(cwd, "group" + threadID + "postingAddr.txt");
-        timeToExit = false;
     }
 
     private final int threadID;
 
     private volatile String currentWord;
-    private final Semaphore currentWordMutex;
+    private final Semaphore currentWordMutex = new Semaphore(1);
 
-    private volatile boolean timeToExit;
-    private final Semaphore timeToExitMutex;
+    private volatile boolean timeToExit = false;
+    private final Semaphore timeToExitMutex = new Semaphore(1);
 
     private final ThreadedDictionaryReader.ThreadedDictQueryResult result;
 
-    private final Semaphore waitForTask;
+    private final Semaphore waitForTask = new Semaphore(0);
     private final Semaphore finishReport;
 
     private final File indexFile;
     private final File fileIDsFile;
     private final File postingAddrFile;
-    private final ConcurrentMap<Integer, String> fileByID;
+    private final ConcurrentMap<Integer, String> fileByID = new ConcurrentHashMap<>();
     private BlockedCompressedDictionary postingAddresses;
 
     @Override

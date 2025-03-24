@@ -16,16 +16,14 @@ import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class InvertedIndexQueryEngine implements QueryEngine {
     public InvertedIndexQueryEngine(List<File> targetFiles) throws IOException {
-        fileNames = new LinkedList<>();
-        dictionary = new TreeMap<>();
         for (File targetFile : targetFiles) {
             analyze(targetFile);
         }
     }
 
-    protected List<String> fileNames;
+    protected List<String> fileNames = new ArrayList<>();
 
-    protected TreeMap<String, HashSet<Integer>> dictionary;
+    protected TreeMap<String, HashSet<Integer>> dictionary = new TreeMap<>();
 
     protected void analyze(File file) throws IOException {
         FileFormatParser br = FileFormatParserFactory.getFileParser(file);

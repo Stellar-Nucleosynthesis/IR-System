@@ -15,7 +15,7 @@ public class Main {
 
     private static void threadedDictTest() throws InterruptedException {
         File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
-        File bookDir = new File("C:\\Users\\nstep\\Downloads\\books\\books");
+        File bookDir = new File("C:\\Users\\nstep\\Downloads\\txt-files.tar");
         long sTime = System.nanoTime();
         ThreadedQueryEngine dict = new ThreadedQueryEngine(cwd, listFilesRecursive(bookDir), 32);
         QuerySystem system = new QuerySystem(dict, new BooleanRetrQueryParser());

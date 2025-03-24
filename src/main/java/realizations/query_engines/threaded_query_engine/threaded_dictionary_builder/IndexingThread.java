@@ -1,4 +1,4 @@
-package realizations.query_engines.threaded_query_engine.ThreadedDictionaryBuilder;
+package realizations.query_engines.threaded_query_engine.threaded_dictionary_builder;
 
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
@@ -13,8 +13,6 @@ import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 public class IndexingThread implements Runnable {
     IndexingThread(File workingDir, List<File> targetFiles, int threadID){
         this.targetFiles = targetFiles;
-        this.postingAddresses = new HashMap<>();
-        this.fileIDs = new HashMap<>();
         this.outputFile = new File(workingDir, "group" + threadID + "_output.txt");
         this.fileIDsFile = new File(workingDir, "group" + threadID + "fileIDs.txt");
         this.postingAddrFile = new File(workingDir, "group" + threadID + "postingAddr.txt");
@@ -23,24 +21,22 @@ public class IndexingThread implements Runnable {
             boolean res = cwd.mkdir();
         }
         this.tempFileDir = cwd;
-        buffer = new HashMap<>();
-        tempFiles = new ArrayList<>();
     }
 
     private final List<File> targetFiles;
     private final File outputFile;
 
-    private final Map<String, Integer> postingAddresses;
-    private final Map<String, Integer> fileIDs;
+    private final Map<String, Integer> postingAddresses = new HashMap<>();
+    private final Map<String, Integer> fileIDs = new HashMap<>();
     private final File fileIDsFile;
     private final File postingAddrFile;
 
-    private final HashMap<String, List<Integer>> buffer;
+    private final HashMap<String, List<Integer>> buffer = new HashMap<>();
     private int logsInMemory = 0;
     private static final int MAX_SIZE = 100_000;
 
     private final File tempFileDir;
-    private final List<File> tempFiles;
+    private final List<File> tempFiles = new ArrayList<>();
 
     @Override
     public void run() {

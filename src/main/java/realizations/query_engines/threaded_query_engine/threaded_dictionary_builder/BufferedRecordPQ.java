@@ -1,4 +1,4 @@
-package realizations.query_engines.threaded_query_engine.ThreadedDictionaryBuilder;
+package realizations.query_engines.threaded_query_engine.threaded_dictionary_builder;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +9,6 @@ import java.util.PriorityQueue;
 
 public class BufferedRecordPQ {
     BufferedRecordPQ(List<File> files) throws IOException {
-        pq = new PriorityQueue<>(Comparator.comparing(o -> o.term));
         for (File file : files) {
             BufferedRecordReader reader = new BufferedRecordReader(file);
             if (reader.hasNext()) {
@@ -18,7 +17,7 @@ public class BufferedRecordPQ {
         }
     }
 
-    private final PriorityQueue<BufferedRecordReader> pq;
+    private final PriorityQueue<BufferedRecordReader> pq = new PriorityQueue<>(Comparator.comparing(o -> o.term));
 
     public void poll() throws IOException {
         if(!hasNext()) throw new NoSuchElementException();

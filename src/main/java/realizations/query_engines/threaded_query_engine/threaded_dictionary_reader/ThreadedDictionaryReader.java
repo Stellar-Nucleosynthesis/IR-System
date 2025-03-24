@@ -1,4 +1,4 @@
-package realizations.query_engines.threaded_query_engine.ThreadedDictionaryReader;
+package realizations.query_engines.threaded_query_engine.threaded_dictionary_reader;
 
 import query_system.QueryResult;
 
@@ -12,7 +12,6 @@ import java.util.concurrent.Semaphore;
 public class ThreadedDictionaryReader {
     public ThreadedDictionaryReader(File workingDir, int threadNum) {
         this.threadNum = threadNum;
-        this.finishWait = new Semaphore(0);
         results = new ThreadedDictQueryResult[threadNum];
         readingThreads = new ReadingThread[threadNum];
         for(int i = 0; i < threadNum; i++){
@@ -25,7 +24,7 @@ public class ThreadedDictionaryReader {
 
     private final ReadingThread[] readingThreads;
 
-    private final Semaphore finishWait;
+    private final Semaphore finishWait = new Semaphore(0);
 
     private final int threadNum;
     private final ThreadedDictQueryResult[] results;

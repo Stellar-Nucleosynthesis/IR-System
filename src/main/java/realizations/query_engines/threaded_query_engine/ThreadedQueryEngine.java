@@ -2,8 +2,8 @@ package realizations.query_engines.threaded_query_engine;
 
 import query_system.QueryEngine;
 import query_system.QueryResult;
-import realizations.query_engines.threaded_query_engine.ThreadedDictionaryBuilder.ThreadedDictionaryBuilder;
-import realizations.query_engines.threaded_query_engine.ThreadedDictionaryReader.ThreadedDictionaryReader;
+import realizations.query_engines.threaded_query_engine.threaded_dictionary_builder.ThreadedDictionaryBuilder;
+import realizations.query_engines.threaded_query_engine.threaded_dictionary_reader.ThreadedDictionaryReader;
 
 import java.io.*;
 import java.util.List;

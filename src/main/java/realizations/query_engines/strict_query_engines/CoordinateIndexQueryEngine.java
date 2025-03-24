@@ -16,16 +16,14 @@ import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class CoordinateIndexQueryEngine implements QueryEngine {
     CoordinateIndexQueryEngine(List<File> targetFiles) throws IOException {
-        fileNames = new LinkedList<>();
-        dictionary = new HashMap<>();
         for (File file : targetFiles) {
             analyze(file);
         }
     }
 
-    private List<String> fileNames;
+    private List<String> fileNames = new ArrayList<>();
 
-    private Map<String, Map<Integer, Set<Integer>>> dictionary;
+    private Map<String, Map<Integer, Set<Integer>>> dictionary = new HashMap<>();
 
     private void analyze(File file) throws IOException {
         FileFormatParser br = FileFormatParserFactory.getFileParser(file);

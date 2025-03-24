@@ -1,4 +1,4 @@
-package realizations.query_engines.threaded_query_engine.ThreadedDictionaryBuilder;
+package realizations.query_engines.threaded_query_engine.threaded_dictionary_builder;
 
 import java.io.*;
 import java.util.ArrayList;
