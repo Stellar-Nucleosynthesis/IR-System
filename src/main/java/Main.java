@@ -1,8 +1,6 @@
-import QuerySystem.QuerySystem;
-import Realizations.Dictionaries.ThreadedDictionary.ThreadedDictionary;
-import Realizations.Dictionaries.ThreadedDictionary.ThreadedDictionaryBuilder.ThreadedDictionaryBuilder;
-import Realizations.Dictionaries.ThreadedDictionary.ThreadedDictionaryReader.ThreadedDictionaryReader;
-import Realizations.QueryParsers.BooleanRetrQueryParser;
+import query_system.QuerySystem;
+import realizations.query_engines.threaded_query_engine.ThreadedQueryEngine;
+import realizations.query_parsers.BooleanRetrQueryParser;
 
 import java.io.*;
 import java.util.*;
@@ -17,9 +15,9 @@ public class Main {
 
     private static void threadedDictTest() throws InterruptedException {
         File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
-        File bookDir = new File("C:\\Users\\nstep\\Downloads\\smol_books\\books");
+        File bookDir = new File("C:\\Users\\nstep\\Downloads\\books\\books");
         long sTime = System.nanoTime();
-        ThreadedDictionary dict = new ThreadedDictionary(cwd, listFilesRecursive(bookDir), 32);
+        ThreadedQueryEngine dict = new ThreadedQueryEngine(cwd, listFilesRecursive(bookDir), 32);
         QuerySystem system = new QuerySystem(dict, new BooleanRetrQueryParser());
         long eTime = System.nanoTime();
         long dur = eTime - sTime;
