@@ -19,7 +19,7 @@ public class FileFormatParserFactory {
 
     private static class TxtParser implements FileFormatParser {
         private final BufferedReader reader;
-        private final Zone currentZone;
+        private Zone currentZone;
 
         TxtParser(File file) throws FileNotFoundException {
             this.reader = new BufferedReader(new FileReader(file));
@@ -27,7 +27,17 @@ public class FileFormatParserFactory {
         }
 
         public String readLine() throws IOException {
-            return reader.readLine();
+            String line = reader.readLine();
+            if (line == null) return null;
+
+            if (line.startsWith("Title:")) {
+                currentZone = Zone.TITLE;
+            } else if (line.startsWith("Author:")) {
+                currentZone = Zone.AUTHORS;
+            } else {
+                currentZone = Zone.BODY;
+            }
+            return line;
         }
 
         public Zone getCurrentZone() {
