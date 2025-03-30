@@ -1,4 +1,6 @@
-package realizations.query_engines.threaded_query_engine.threaded_dictionary_builder;
+package realizations.query_engines.threaded_query_engine.threaded_query_engine_builder;
+
+import utils.postings.LocalPosting;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -9,11 +11,11 @@ import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 public class BufferedRecordReader {
     private final DataInputStream in;
     public String term;
-    public List<Integer> posting;
+    public List<LocalPosting> postings;
 
     public BufferedRecordReader(File file) throws IOException {
         this.in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-        posting = new ArrayList<>();
+        postings = new ArrayList<>();
         advance();
     }
 
@@ -33,11 +35,7 @@ public class BufferedRecordReader {
             term.append(in.readChar());
         }
         this.term = term.toString();
-        int postingLen = readCodedInt(in);
-        posting = new ArrayList<>();
-        for (int i = 0; i < postingLen; i++) {
-            posting.add(readCodedInt(in));
-        }
+        postings = LocalPosting.readPostingsList(in);
     }
 
     public void close() throws IOException {

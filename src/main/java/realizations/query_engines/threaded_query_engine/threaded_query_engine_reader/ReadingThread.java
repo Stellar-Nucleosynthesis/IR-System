@@ -1,6 +1,7 @@
-package realizations.query_engines.threaded_query_engine.threaded_dictionary_reader;
-
+package realizations.query_engines.threaded_query_engine.threaded_query_engine_reader;
 import utils.encoding_utils.BlockedCompressedDictionary;
+import utils.postings.GlobalPosting;
+import utils.postings.LocalPosting;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -11,10 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 
-import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
-
 public class ReadingThread implements Runnable {
-    ReadingThread(int threadID, File cwd, ThreadedDictionaryReader.ThreadedDictQueryResult result, Semaphore finishReport) {
+    ReadingThread(int threadID, File cwd, ThreadedQueryEngineReader.ThreadedDictQueryResult result, Semaphore finishReport) {
         this.threadID = threadID;
         this.result = result;
         this.finishReport = finishReport;
@@ -31,7 +30,7 @@ public class ReadingThread implements Runnable {
     private volatile boolean timeToExit = false;
     private final Semaphore timeToExitMutex = new Semaphore(1);
 
-    private final ThreadedDictionaryReader.ThreadedDictQueryResult result;
+    private final ThreadedQueryEngineReader.ThreadedDictQueryResult result;
 
     private final Semaphore waitForTask = new Semaphore(0);
     private final Semaphore finishReport;
@@ -89,10 +88,10 @@ public class ReadingThread implements Runnable {
         return fileByID.get(fileID);
     }
 
-    public Set<Long> getAllFileIDs(){
-        Set<Long> result = new HashSet<>();
+    public Set<GlobalPosting> getAllFileIDs(){
+        Set<GlobalPosting> result = new HashSet<>();
         for(int fileID : fileByID.keySet()){
-            result.add(toGlobalID(fileID));
+            result.add(new GlobalPosting(threadID, new LocalPosting(fileID)));
         }
         return result;
     }
@@ -109,25 +108,18 @@ public class ReadingThread implements Runnable {
        fileIDbr.close();
     }
 
-    private List<Long> findEntries(String currentWord) throws IOException {
+    private List<GlobalPosting> findEntries(String currentWord) throws IOException {
         if(!postingAddresses.containsTerm(currentWord)){
             return new ArrayList<>();
         }
         int postingAddress = postingAddresses.getPostingAddr(currentWord);
         DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
         in.skipBytes(postingAddress);
-        int postingSize = readCodedInt(in);
-        List<Long> result = new ArrayList<>(postingSize);
-        int prevNum = 0;
-        for (int i = 0; i < postingSize; i++) {
-            int num = prevNum + readCodedInt(in);
-            prevNum = num;
-            result.add(toGlobalID(num));
+        List<LocalPosting> result = LocalPosting.readPostingsList(in);
+        List<GlobalPosting> res = new ArrayList<>();
+        for(LocalPosting posting : result){
+            res.add(posting.toGlobalPosting(threadID));
         }
-        return result;
-    }
-
-    private long toGlobalID(int ID){
-        return (long) threadID << 32 | ID;
+        return res;
     }
 }

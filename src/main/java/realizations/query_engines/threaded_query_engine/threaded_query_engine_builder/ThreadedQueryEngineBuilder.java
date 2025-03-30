@@ -1,11 +1,11 @@
-package realizations.query_engines.threaded_query_engine.threaded_dictionary_builder;
+package realizations.query_engines.threaded_query_engine.threaded_query_engine_builder;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ThreadedDictionaryBuilder {
-    public ThreadedDictionaryBuilder(File workingDir, List<File> targetFiles, int threadNum){
+public class ThreadedQueryEngineBuilder {
+    public ThreadedQueryEngineBuilder(File workingDir, List<File> targetFiles, int threadNum){
         this.workingDir = workingDir;
         if(threadNum < 1) threadNum = 1;
         this.threadNum = threadNum;

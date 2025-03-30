@@ -1,6 +1,7 @@
-package realizations.query_engines.threaded_query_engine.threaded_dictionary_reader;
+package realizations.query_engines.threaded_query_engine.threaded_query_engine_reader;
 
 import query_system.QueryResult;
+import utils.postings.GlobalPosting;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,8 +10,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-public class ThreadedDictionaryReader {
-    public ThreadedDictionaryReader(File workingDir, int threadNum) {
+public class ThreadedQueryEngineReader {
+    public ThreadedQueryEngineReader(File workingDir, int threadNum) {
         this.threadNum = threadNum;
         results = new ThreadedDictQueryResult[threadNum];
         readingThreads = new ReadingThread[threadNum];
@@ -59,16 +60,16 @@ public class ThreadedDictionaryReader {
             result = new ArrayList<>();
         }
 
-        public List<Long> result;
+        public List<GlobalPosting> result;
 
         @Override
         public void and(QueryResult other) {
             checkArgument(other);
-            Set<Long> thatResult = new HashSet<>(((ThreadedDictQueryResult)other).result);
-            ArrayList<Long> res = new ArrayList<>();
-            for(Long l : result){
-                if(thatResult.contains(l)){
-                    res.add(l);
+            Set<GlobalPosting> thatResult = new HashSet<>(((ThreadedDictQueryResult)other).result);
+            ArrayList<GlobalPosting> res = new ArrayList<>();
+            for(GlobalPosting posting : result){
+                if(thatResult.contains(posting)){
+                    res.add(posting);
                 }
             }
             result = res;
@@ -77,21 +78,21 @@ public class ThreadedDictionaryReader {
         @Override
         public void or(QueryResult other) {
             checkArgument(other);
-            Set<Long> thatResult = new HashSet<>(((ThreadedDictQueryResult)other).result);
+            Set<GlobalPosting> thatResult = new HashSet<>(((ThreadedDictQueryResult)other).result);
             thatResult.addAll(result);
             result = new ArrayList<>(thatResult);
         }
 
         @Override
         public void not() {
-            Set<Long> allFileIDs = new HashSet<>();
+            Set<GlobalPosting> allFileIDs = new HashSet<>();
             for(ReadingThread thread : readingThreads){
                 allFileIDs.addAll(thread.getAllFileIDs());
             }
-            ArrayList<Long> res = new ArrayList<>();
-            for(Long l : result){
-                if(!allFileIDs.contains(l)){
-                    res.add(l);
+            ArrayList<GlobalPosting> res = new ArrayList<>();
+            for(GlobalPosting posting : result){
+                if(!allFileIDs.contains(posting)){
+                    res.add(posting);
                 }
             }
             result = res;
@@ -101,15 +102,13 @@ public class ThreadedDictionaryReader {
         public String[] value() {
             String[] res = new String[result.size()];
             for(int i = 0; i < result.size(); i++){
-                long ID = result.get(i);
-                int threadID = (int) (ID >> 32);
-                int fileID = (int) ID;
-                res[i] = readingThreads[threadID].getFileNameById(fileID);
+                GlobalPosting posting = result.get(i);
+                res[i] = readingThreads[posting.getThreadID()].getFileNameById(posting.getFileID());
             }
             return res;
         }
 
-        public void setValue(List<Long> value){
+        public void setValue(List<GlobalPosting> value){
             result = value;
         }
 
