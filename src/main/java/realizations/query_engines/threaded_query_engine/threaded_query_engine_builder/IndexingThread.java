@@ -3,6 +3,7 @@ package realizations.query_engines.threaded_query_engine.threaded_query_engine_b
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
 import utils.file_parsing_utils.StemmingStringTokenizer;
+import utils.file_parsing_utils.Zone;
 import utils.postings.LocalPosting;
 
 import java.io.*;
@@ -61,19 +62,23 @@ public class IndexingThread implements Runnable {
         String line = br.readLine();
         while (line != null) {
             for(String word : StemmingStringTokenizer.tokenize(line))
-                logWord(word, fileID);
+                logWord(word, fileID, br.getCurrentZone());
             line = br.readLine();
         }
         br.close();
     }
 
-    private void logWord(String word, int fileID) throws IOException {
+    private void logWord(String word, int fileID, Zone zone) throws IOException {
         buffer.putIfAbsent(word, new ArrayList<>());
         List<LocalPosting> postings = buffer.get(word);
-        if(!postings.isEmpty() && postings.getLast().fileID() == fileID) return;
-        postings.add(new LocalPosting(fileID));
-        if(++logsInMemory >= MAX_SIZE)
-            writeBufferToFile();
+        LocalPosting current = new LocalPosting(fileID, zone);
+        if(!postings.isEmpty() && postings.getLast().getFileID() == fileID) {
+            postings.getLast().merge(current);
+        } else {
+            postings.add(current);
+            if(++logsInMemory >= MAX_SIZE)
+                writeBufferToFile();
+        }
     }
 
     private void writeBufferToFile() throws IOException {
@@ -106,9 +111,24 @@ public class IndexingThread implements Runnable {
             }
             postingAddresses.put(currentTerm, bytesWritten);
             Collections.sort(postings);
+            removeDuplicates(postings);
             bytesWritten += LocalPosting.writePostingsList(out, postings);
         }
         out.close();
+    }
+
+    private void removeDuplicates(List<LocalPosting> postings) {
+        if (postings.isEmpty()) return;
+        int uniqueIndex = 0;
+        for (int i = 1; i < postings.size(); i++) {
+            if (!postings.get(i).equals(postings.get(uniqueIndex))) {
+                uniqueIndex++;
+                postings.set(uniqueIndex, postings.get(i));
+            }
+        }
+        while (postings.size() > uniqueIndex + 1) {
+            postings.removeLast();
+        }
     }
 
     private void saveIDs() throws IOException {

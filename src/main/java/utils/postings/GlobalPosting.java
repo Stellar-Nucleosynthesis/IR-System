@@ -14,6 +14,8 @@ public class GlobalPosting {
     }
 
     public int getFileID() {
-        return localPosting.fileID();
+        return localPosting.getFileID();
     }
+
+    public double getRating() { return localPosting.getRating(); }
 }

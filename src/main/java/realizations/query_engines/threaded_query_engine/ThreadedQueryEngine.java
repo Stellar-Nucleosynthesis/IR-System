@@ -40,11 +40,11 @@ public class ThreadedQueryEngine implements QueryEngine {
 
     @Override
     public QueryResult findPhrase(String phrase) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public QueryResult findWordsWithin(String word1, String word2, int n) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 }

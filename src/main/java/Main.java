@@ -16,6 +16,7 @@ public class Main {
     private static void threadedDictTest() throws InterruptedException {
         File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
         File bookDir = new File("C:\\Users\\nstep\\Downloads\\books");
+        System.out.println(listFilesRecursive(bookDir).size());
         long sTime = System.nanoTime();
         ThreadedQueryEngine dict = new ThreadedQueryEngine(cwd, listFilesRecursive(bookDir), 32);
         QuerySystem system = new QuerySystem(dict, new BooleanRetrQueryParser());
@@ -33,7 +34,7 @@ public class Main {
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
 
-            System.out.println(Arrays.toString(res));
+            System.out.println(Arrays.toString(Arrays.copyOf(res, 10)));
             System.out.println("Query completed in " + duration / 1_000_000 + "ms");
             System.out.println(res.length + " results");
         }

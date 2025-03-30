@@ -4,10 +4,7 @@ import query_system.QueryResult;
 import utils.postings.GlobalPosting;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class ThreadedQueryEngineReader {
@@ -100,9 +97,10 @@ public class ThreadedQueryEngineReader {
 
         @Override
         public String[] value() {
+            result.sort(Comparator.comparingDouble(GlobalPosting::getRating));
             String[] res = new String[result.size()];
             for(int i = 0; i < result.size(); i++){
-                GlobalPosting posting = result.get(i);
+                GlobalPosting posting = result.get(result.size() - 1 - i);
                 res[i] = readingThreads[posting.getThreadID()].getFileNameById(posting.getFileID());
             }
             return res;
