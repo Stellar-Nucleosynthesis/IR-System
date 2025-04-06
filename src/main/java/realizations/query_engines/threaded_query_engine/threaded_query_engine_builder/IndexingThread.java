@@ -121,9 +121,10 @@ public class IndexingThread implements Runnable {
         if (postings.isEmpty()) return;
         int uniqueIndex = 0;
         for (int i = 1; i < postings.size(); i++) {
-            if (!postings.get(i).equals(postings.get(uniqueIndex))) {
-                uniqueIndex++;
-                postings.set(uniqueIndex, postings.get(i));
+            if (postings.get(i).getFileID() != postings.get(uniqueIndex).getFileID()) {
+                postings.set(++uniqueIndex, postings.get(i));
+            } else {
+                postings.get(uniqueIndex).merge(postings.get(i));
             }
         }
         while (postings.size() > uniqueIndex + 1) {

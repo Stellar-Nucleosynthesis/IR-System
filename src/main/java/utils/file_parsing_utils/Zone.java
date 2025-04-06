@@ -5,8 +5,6 @@ public enum Zone {
     AUTHORS(0.2, 1),
     BODY(0.5, 2);
 
-    public static final int NUM_ZONES = 3;
-
     private final double value;
     private final int index;
 

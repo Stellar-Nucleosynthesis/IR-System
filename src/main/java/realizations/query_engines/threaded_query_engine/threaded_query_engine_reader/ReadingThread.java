@@ -4,10 +4,7 @@ import utils.postings.GlobalPosting;
 import utils.postings.LocalPosting;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -120,6 +117,7 @@ public class ReadingThread implements Runnable {
         for(LocalPosting posting : result){
             res.add(posting.toGlobalPosting(threadID));
         }
+        Collections.sort(res);
         return res;
     }
 }

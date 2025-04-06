@@ -1,6 +1,7 @@
 import query_system.QuerySystem;
 import realizations.query_engines.threaded_query_engine.ThreadedQueryEngine;
 import realizations.query_parsers.BooleanRetrQueryParser;
+import realizations.query_parsers.PhrasalBooleanRetrQueryParser;
 
 import java.io.*;
 import java.util.*;
@@ -18,8 +19,8 @@ public class Main {
         File bookDir = new File("C:\\Users\\nstep\\Downloads\\books");
         System.out.println(listFilesRecursive(bookDir).size());
         long sTime = System.nanoTime();
-        ThreadedQueryEngine dict = new ThreadedQueryEngine(cwd, listFilesRecursive(bookDir), 32);
-        QuerySystem system = new QuerySystem(dict, new BooleanRetrQueryParser());
+        ThreadedQueryEngine dict = new ThreadedQueryEngine(cwd, 32);
+        QuerySystem system = new QuerySystem(dict, new PhrasalBooleanRetrQueryParser());
         long eTime = System.nanoTime();
         long dur = eTime - sTime;
         System.out.println("Index constructed in " + dur/1_000_000 + "ms");

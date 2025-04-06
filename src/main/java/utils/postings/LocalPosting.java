@@ -23,7 +23,7 @@ public class LocalPosting implements Comparable<LocalPosting> {
     }
 
     private final int fileID;
-    private final List<Zone> zones = new ArrayList<>();
+    private List<Zone> zones = new ArrayList<>();
 
     public static int writePostingsList(DataOutputStream out, List<LocalPosting> postings) throws IOException {
         int bytesWritten = 0;
@@ -62,6 +62,29 @@ public class LocalPosting implements Comparable<LocalPosting> {
                 this.zones.add(z);
             }
         }
+        Collections.sort(this.zones);
+    }
+
+    public void intersect(LocalPosting posting) {
+        assert posting.fileID == this.fileID;
+        List<Zone> newZones = new ArrayList<>();
+        for(Zone z : this.zones){
+            if(posting.zones.contains(z)){
+                newZones.add(z);
+            }
+        }
+        this.zones = newZones;
+        Collections.sort(zones);
+    }
+
+    public void subtract() {
+        List<Zone> newZones = new ArrayList<>();
+        for(Zone z : Zone.values()){
+            if(!this.zones.contains(z)){
+                newZones.add(z);
+            }
+        }
+        this.zones = newZones;
         Collections.sort(zones);
     }
 

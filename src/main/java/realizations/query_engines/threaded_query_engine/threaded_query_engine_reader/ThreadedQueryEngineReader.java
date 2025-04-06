@@ -62,22 +62,57 @@ public class ThreadedQueryEngineReader {
         @Override
         public void and(QueryResult other) {
             checkArgument(other);
-            Set<GlobalPosting> thatResult = new HashSet<>(((ThreadedDictQueryResult)other).result);
-            ArrayList<GlobalPosting> res = new ArrayList<>();
-            for(GlobalPosting posting : result){
-                if(thatResult.contains(posting)){
-                    res.add(posting);
+            List<GlobalPosting> otherList = ((ThreadedDictQueryResult) other).result;
+            List<GlobalPosting> merged = new ArrayList<>();
+            int i = 0, j = 0;
+            while (i < result.size() && j < otherList.size()) {
+                GlobalPosting a = result.get(i);
+                GlobalPosting b = otherList.get(j);
+                int cmp = a.compareTo(b);
+                if (cmp < 0) {
+                    i++;
+                } else if (cmp > 0) {
+                    j++;
+                } else {
+                    a.intersect(b);
+                    merged.add(a);
+                    i++;
+                    j++;
                 }
             }
-            result = res;
+            result = merged;
         }
 
         @Override
         public void or(QueryResult other) {
             checkArgument(other);
-            Set<GlobalPosting> thatResult = new HashSet<>(((ThreadedDictQueryResult)other).result);
-            thatResult.addAll(result);
-            result = new ArrayList<>(thatResult);
+            List<GlobalPosting> otherList = ((ThreadedDictQueryResult) other).result;
+            List<GlobalPosting> merged = new ArrayList<>();
+            int i = 0, j = 0;
+            while (i < result.size() && j < otherList.size()) {
+                GlobalPosting a = result.get(i);
+                GlobalPosting b = otherList.get(j);
+                int cmp = a.compareTo(b);
+                if (cmp < 0) {
+                    merged.add(a);
+                    i++;
+                } else if (cmp > 0) {
+                    merged.add(b);
+                    j++;
+                } else {
+                    a.merge(b);
+                    merged.add(a);
+                    i++;
+                    j++;
+                }
+            }
+            while (i < result.size()) {
+                merged.add(result.get(i++));
+            }
+            while (j < otherList.size()) {
+                merged.add(otherList.get(j++));
+            }
+            result = merged;
         }
 
         @Override
@@ -89,6 +124,7 @@ public class ThreadedQueryEngineReader {
             ArrayList<GlobalPosting> res = new ArrayList<>();
             for(GlobalPosting posting : result){
                 if(!allFileIDs.contains(posting)){
+                    posting.subtract();
                     res.add(posting);
                 }
             }
