@@ -1,4 +1,4 @@
-package realizations.query_engines.strict_query_engines;
+package query_engines.simple_query_engines;
 
 import query_system.QueryEngine;
 import query_system.QueryResult;
@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import static utils.file_parsing_utils.StemmingStringTokenizer.normalize;
 import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
-public class InvertedIndexQueryEngine implements QueryEngine {
+public class InvertedIndexQueryEngine implements QueryEngine<InvertedIndexQueryEngine.InvIndQueryResult> {
     public InvertedIndexQueryEngine(List<File> targetFiles) throws IOException {
         for (File targetFile : targetFiles) {
             analyze(targetFile);
@@ -44,18 +44,18 @@ public class InvertedIndexQueryEngine implements QueryEngine {
         if(!file.getAbsolutePath().endsWith(".iid0"))
             file = new File(file.getAbsolutePath() + ".iid0");
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        String fileList = "";
+        StringBuilder fileList = new StringBuilder();
         for(String fileName : fileNames){
-            fileList += fileName + "\t";
+            fileList.append(fileName).append("\t");
         }
-        fileList += '\n';
-        writer.write(fileList);
+        fileList.append('\n');
+        writer.write(fileList.toString());
         for(String str : dictionary.keySet()){
-            String line = str;
+            StringBuilder line = new StringBuilder(str);
             for(int fileID : dictionary.get(str))
-                line += "\t" + fileID;
-            line += '\n';
-            writer.write(line);
+                line.append("\t").append(fileID);
+            line.append('\n');
+            writer.write(line.toString());
         }
         writer.flush();
         writer.close();
@@ -98,7 +98,7 @@ public class InvertedIndexQueryEngine implements QueryEngine {
     }
 
     @Override
-    public QueryResult findWord(String word) {
+    public InvIndQueryResult findWord(String word) {
         Set<Integer> set = dictionary.get(normalize(word));
         if(set == null) return new InvIndQueryResult(null);
         LinkedList<Integer> files = new LinkedList<>(set);
@@ -107,16 +107,16 @@ public class InvertedIndexQueryEngine implements QueryEngine {
     }
 
     @Override
-    public QueryResult findPhrase(String phrase) {
+    public InvIndQueryResult findPhrase(String phrase) {
         return null;
     }
 
     @Override
-    public QueryResult findWordsWithin(String word1, String word2, int n) {
+    public InvIndQueryResult findWordsWithin(String word1, String word2, int n) {
         return null;
     }
 
-    protected class InvIndQueryResult implements QueryResult {
+    public class InvIndQueryResult implements QueryResult<InvIndQueryResult> {
         public InvIndQueryResult(List<Integer> postings){
             this.postings = Objects.requireNonNullElseGet(postings, LinkedList::new);
         }
@@ -124,24 +124,17 @@ public class InvertedIndexQueryEngine implements QueryEngine {
         List<Integer> postings;
 
         @Override
-        public void and(QueryResult other) {
-            checkParam(other);
+        public void and(InvIndQueryResult other) {
             postings = postings.stream()
-                    .filter(((InvIndQueryResult)other).postings::contains)
+                    .filter(other.postings::contains)
                     .collect(Collectors.toList());
         }
 
         @Override
-        public void or(QueryResult other) {
-            checkParam(other);
-            postings = Stream.concat(postings.stream(), ((InvIndQueryResult)other).postings.stream())
+        public void or(InvIndQueryResult other) {
+            postings = Stream.concat(postings.stream(), other.postings.stream())
                     .distinct()
                     .collect(Collectors.toList());
-        }
-
-        private void checkParam(QueryResult other) {
-            if(!(other instanceof InvIndQueryResult))
-                throw new IllegalCallerException("The parameter must be of the same class!");
         }
 
         @Override

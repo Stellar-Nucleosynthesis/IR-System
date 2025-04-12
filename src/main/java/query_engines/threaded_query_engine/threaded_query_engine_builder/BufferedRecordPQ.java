@@ -1,6 +1,6 @@
-package realizations.query_engines.threaded_query_engine.threaded_query_engine_builder;
+package query_engines.threaded_query_engine.threaded_query_engine_builder;
 
-import utils.postings.LocalPosting;
+import utils.postings.ZonedLocalPosting;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class BufferedRecordPQ {
         return pq.peek().term;
     }
 
-    public List<LocalPosting> peekPosting(){
+    public List<ZonedLocalPosting> peekPosting(){
         if(!hasNext()) throw new NoSuchElementException();
         assert pq.peek() != null;
         return pq.peek().postings;

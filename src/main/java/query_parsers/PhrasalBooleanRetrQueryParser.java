@@ -1,12 +1,12 @@
-package realizations.query_parsers;
+package query_parsers;
 
 import query_system.QueryEngine;
 import query_system.QueryParser;
 import query_system.QueryResult;
 
-public class PhrasalBooleanRetrQueryParser implements QueryParser {
+public class PhrasalBooleanRetrQueryParser<T extends QueryResult<T>> implements QueryParser<T> {
 
-    static QueryEngine dict;
+    private QueryEngine<T> queryEngine;
 
     private static class Token {
 
@@ -84,7 +84,7 @@ public class PhrasalBooleanRetrQueryParser implements QueryParser {
         }
     }
 
-    private static class Parser {
+    private class Parser {
         public Parser(String query) {
             this.lexer = new Lexer(query);
             this.currentToken = lexer.nextToken();
@@ -101,16 +101,16 @@ public class PhrasalBooleanRetrQueryParser implements QueryParser {
             }
         }
 
-        public QueryResult parse() {
-            QueryResult res = parseExpr();
+        public T parse() {
+            T res = parseExpr();
             if (currentToken.type != Token.Type.END) {
                 throw new RuntimeException("Unexpected token at end of input");
             }
             return res;
         }
 
-        private QueryResult parseExpr() {
-            QueryResult res;
+        private T parseExpr() {
+            T res;
             switch (currentToken.type) {
                 case NOT:
                     match(Token.Type.NOT);
@@ -123,11 +123,11 @@ public class PhrasalBooleanRetrQueryParser implements QueryParser {
                     match(Token.Type.RPAREN);
                     break;
                 case WORD:
-                    res = dict.findWord(currentToken.value);
+                    res = queryEngine.findWord(currentToken.value);
                     match(Token.Type.WORD);
                     break;
                 case PHRASE:
-                    res = dict.findPhrase(currentToken.value);
+                    res = queryEngine.findPhrase(currentToken.value);
                     match(Token.Type.PHRASE);
                     break;
                 case WITHIN:
@@ -139,7 +139,7 @@ public class PhrasalBooleanRetrQueryParser implements QueryParser {
                     match(Token.Type.COMMA);
                     String word2 = currentToken.value;
                     match(Token.Type.WORD);
-                    res = dict.findWordsWithin(word1, word2, n);
+                    res = queryEngine.findWordsWithin(word1, word2, n);
                     break;
                 default:
                     throw new RuntimeException("Unexpected token: " + currentToken.type);
@@ -163,8 +163,8 @@ public class PhrasalBooleanRetrQueryParser implements QueryParser {
     }
 
     @Override
-    public QueryResult parse(QueryEngine dict, String query) {
-        PhrasalBooleanRetrQueryParser.dict = dict;
+    public T parse(QueryEngine<T> queryEngine, String query) {
+        this.queryEngine = queryEngine;
         Parser parser = new Parser(query);
         return parser.parse();
     }

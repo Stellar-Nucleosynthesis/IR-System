@@ -1,10 +1,10 @@
-package realizations.query_engines.threaded_query_engine.threaded_query_engine_builder;
+package query_engines.threaded_query_engine.threaded_query_engine_builder;
 
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
 import utils.file_parsing_utils.StemmingStringTokenizer;
 import utils.file_parsing_utils.Zone;
-import utils.postings.LocalPosting;
+import utils.postings.ZonedLocalPosting;
 
 import java.io.*;
 import java.util.*;
@@ -33,7 +33,7 @@ public class IndexingThread implements Runnable {
     private final File fileIDsFile;
     private final File postingAddrFile;
 
-    private final HashMap<String, List<LocalPosting>> buffer = new HashMap<>();
+    private final HashMap<String, List<ZonedLocalPosting>> buffer = new HashMap<>();
     private int logsInMemory = 0;
     private static final int MAX_SIZE = 100_000;
 
@@ -70,8 +70,8 @@ public class IndexingThread implements Runnable {
 
     private void logWord(String word, int fileID, Zone zone) throws IOException {
         buffer.putIfAbsent(word, new ArrayList<>());
-        List<LocalPosting> postings = buffer.get(word);
-        LocalPosting current = new LocalPosting(fileID, zone);
+        List<ZonedLocalPosting> postings = buffer.get(word);
+        ZonedLocalPosting current = new ZonedLocalPosting(fileID, zone);
         if(!postings.isEmpty() && postings.getLast().getFileID() == fileID) {
             postings.getLast().merge(current);
         } else {
@@ -90,7 +90,7 @@ public class IndexingThread implements Runnable {
         for (String term : terms) {
             writeCodedInt(out, term.length());
             out.writeChars(term);
-            LocalPosting.writePostingsList(out, buffer.get(term));
+            ZonedLocalPosting.writePostingsList(out, buffer.get(term));
         }
         buffer.clear();
         logsInMemory = 0;
@@ -103,7 +103,7 @@ public class IndexingThread implements Runnable {
         int bytesWritten = 0;
         while(pq.hasNext()){
             String currentTerm = pq.peekTerm();
-            List<LocalPosting> postings = pq.peekPosting();
+            List<ZonedLocalPosting> postings = pq.peekPosting();
             pq.poll();
             while(pq.hasNext() && pq.peekTerm().equals(currentTerm)){
                 postings.addAll(pq.peekPosting());
@@ -112,12 +112,12 @@ public class IndexingThread implements Runnable {
             postingAddresses.put(currentTerm, bytesWritten);
             Collections.sort(postings);
             removeDuplicates(postings);
-            bytesWritten += LocalPosting.writePostingsList(out, postings);
+            bytesWritten += ZonedLocalPosting.writePostingsList(out, postings);
         }
         out.close();
     }
 
-    private void removeDuplicates(List<LocalPosting> postings) {
+    private void removeDuplicates(List<ZonedLocalPosting> postings) {
         if (postings.isEmpty()) return;
         int uniqueIndex = 0;
         for (int i = 1; i < postings.size(); i++) {
@@ -143,8 +143,12 @@ public class IndexingThread implements Runnable {
 
     private void clearUp(){
         for(File file : tempFiles){
-            file.delete();
+            boolean res = file.delete();
+            if(!res)
+                System.err.println("Failed to delete temp file: " + file.getAbsolutePath());
         }
-        tempFileDir.delete();
+        boolean res = tempFileDir.delete();
+        if(!res)
+            System.err.println("Failed to delete temp file directory: " + tempFileDir.getAbsolutePath());
     }
 }

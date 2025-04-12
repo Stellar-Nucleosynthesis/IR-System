@@ -1,4 +1,4 @@
-package realizations.query_engines.strict_query_engines;
+package query_engines.simple_query_engines;
 
 import query_system.QueryEngine;
 import query_system.QueryResult;
@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import static utils.file_parsing_utils.StemmingStringTokenizer.normalize;
 import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
-public class CoordinateIndexQueryEngine implements QueryEngine {
+public class CoordinateIndexQueryEngine implements QueryEngine<CoordinateIndexQueryEngine.CoordIndQueryResult> {
     CoordinateIndexQueryEngine(List<File> targetFiles) throws IOException {
         for (File file : targetFiles) {
             analyze(file);
@@ -46,21 +46,21 @@ public class CoordinateIndexQueryEngine implements QueryEngine {
         if(!file.getAbsolutePath().endsWith(".cid0"))
             file = new File(file.getAbsolutePath() + ".cid0");
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        String fileList = "";
+        StringBuilder fileList = new StringBuilder();
         for(String fileName : fileNames){
-            fileList += fileName + "\t";
+            fileList.append(fileName).append("\t");
         }
-        fileList += '\n';
-        writer.write(fileList);
+        fileList.append('\n');
+        writer.write(fileList.toString());
         for(String str : dictionary.keySet()){
-            String line = str;
+            StringBuilder line = new StringBuilder(str);
             for(int fileID : dictionary.get(str).keySet()){
-                line += "\t" + fileID;
+                line.append("\t").append(fileID);
                 for(int position : dictionary.get(str).get(fileID))
-                    line += " " + position;
+                    line.append(" ").append(position);
             }
-            line += '\n';
-            writer.write(line);
+            line.append('\n');
+            writer.write(line.toString());
         }
         writer.flush();
         writer.close();
@@ -108,7 +108,7 @@ public class CoordinateIndexQueryEngine implements QueryEngine {
     }
 
     @Override
-    public QueryResult findWord(String word) {
+    public CoordIndQueryResult findWord(String word) {
         word = normalize(word);
         if(!dictionary.containsKey(word)) return new CoordIndQueryResult(null);
         Set<Integer> set = dictionary.get(word).keySet();
@@ -118,7 +118,7 @@ public class CoordinateIndexQueryEngine implements QueryEngine {
     }
 
     @Override
-    public QueryResult findPhrase(String phrase) {
+    public CoordIndQueryResult findPhrase(String phrase) {
         List<String> words = tokenize(phrase);
         if(words.isEmpty()) return new CoordIndQueryResult(null);
         if(!dictionary.containsKey(words.getFirst())) return new CoordIndQueryResult(null);
@@ -151,7 +151,7 @@ public class CoordinateIndexQueryEngine implements QueryEngine {
     }
 
     @Override
-    public QueryResult findWordsWithin(String word1, String word2, int n) {
+    public CoordIndQueryResult findWordsWithin(String word1, String word2, int n) {
         word1 = normalize(word1);
         word2 = normalize(word2);
         if(!dictionary.containsKey(word1) || !dictionary.containsKey(word2))
@@ -189,7 +189,7 @@ public class CoordinateIndexQueryEngine implements QueryEngine {
         return dictionary.get(word).containsKey(fileID);
     }
 
-    private class CoordIndQueryResult implements QueryResult {
+    public class CoordIndQueryResult implements QueryResult<CoordIndQueryResult> {
         CoordIndQueryResult(List<Integer> postings){
             this.postings = Objects.requireNonNullElseGet(postings, LinkedList::new);
         }
@@ -197,24 +197,17 @@ public class CoordinateIndexQueryEngine implements QueryEngine {
         List<Integer> postings;
 
         @Override
-        public void and(QueryResult other) {
-            checkParam(other);
+        public void and(CoordIndQueryResult other) {
             postings = postings.stream()
                     .filter(((CoordIndQueryResult)other).postings::contains)
                     .collect(Collectors.toList());
         }
 
         @Override
-        public void or(QueryResult other) {
-            checkParam(other);
+        public void or(CoordIndQueryResult other) {
             postings = Stream.concat(postings.stream(), ((CoordIndQueryResult)other).postings.stream())
                     .distinct()
                     .collect(Collectors.toList());
-        }
-
-        private void checkParam(QueryResult other) {
-            if(!(other instanceof CoordIndQueryResult))
-                throw new IllegalCallerException("The parameter must be of the same class!");
         }
 
         @Override

@@ -1,7 +1,7 @@
-package realizations.query_engines.threaded_query_engine.threaded_query_engine_reader;
+package query_engines.threaded_query_engine.threaded_query_engine_reader;
 import utils.encoding_utils.BlockedCompressedDictionary;
-import utils.postings.GlobalPosting;
-import utils.postings.LocalPosting;
+import utils.postings.ZonedGlobalPosting;
+import utils.postings.ZonedLocalPosting;
 
 import java.io.*;
 import java.util.*;
@@ -85,10 +85,10 @@ public class ReadingThread implements Runnable {
         return fileByID.get(fileID);
     }
 
-    public Set<GlobalPosting> getAllFileIDs(){
-        Set<GlobalPosting> result = new HashSet<>();
+    public Set<ZonedGlobalPosting> getAllFileIDs(){
+        Set<ZonedGlobalPosting> result = new HashSet<>();
         for(int fileID : fileByID.keySet()){
-            result.add(new GlobalPosting(threadID, new LocalPosting(fileID)));
+            result.add(new ZonedGlobalPosting(threadID, new ZonedLocalPosting(fileID)));
         }
         return result;
     }
@@ -105,16 +105,16 @@ public class ReadingThread implements Runnable {
        fileIDbr.close();
     }
 
-    private List<GlobalPosting> findEntries(String currentWord) throws IOException {
+    private List<ZonedGlobalPosting> findEntries(String currentWord) throws IOException {
         if(!postingAddresses.containsTerm(currentWord)){
             return new ArrayList<>();
         }
         int postingAddress = postingAddresses.getPostingAddr(currentWord);
         DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
         in.skipBytes(postingAddress);
-        List<LocalPosting> result = LocalPosting.readPostingsList(in);
-        List<GlobalPosting> res = new ArrayList<>();
-        for(LocalPosting posting : result){
+        List<ZonedLocalPosting> result = ZonedLocalPosting.readPostingsList(in);
+        List<ZonedGlobalPosting> res = new ArrayList<>();
+        for(ZonedLocalPosting posting : result){
             res.add(posting.toGlobalPosting(threadID));
         }
         Collections.sort(res);

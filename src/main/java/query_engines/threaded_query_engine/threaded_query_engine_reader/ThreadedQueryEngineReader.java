@@ -1,7 +1,7 @@
-package realizations.query_engines.threaded_query_engine.threaded_query_engine_reader;
+package query_engines.threaded_query_engine.threaded_query_engine_reader;
 
 import query_system.QueryResult;
-import utils.postings.GlobalPosting;
+import utils.postings.ZonedGlobalPosting;
 
 import java.io.File;
 import java.util.*;
@@ -27,7 +27,7 @@ public class ThreadedQueryEngineReader {
     private final int threadNum;
     private final ThreadedDictQueryResult[] results;
 
-    public QueryResult find(String word) throws InterruptedException {
+    public ThreadedDictQueryResult find(String word) throws InterruptedException {
         for(ThreadedDictQueryResult result : results){
             result.result.clear();
         }
@@ -52,22 +52,20 @@ public class ThreadedQueryEngineReader {
         }
     }
 
-    class ThreadedDictQueryResult implements QueryResult {
+    public class ThreadedDictQueryResult implements QueryResult<ThreadedDictQueryResult> {
         ThreadedDictQueryResult(){
             result = new ArrayList<>();
         }
 
-        public List<GlobalPosting> result;
+        public List<ZonedGlobalPosting> result;
 
         @Override
-        public void and(QueryResult other) {
-            checkArgument(other);
-            List<GlobalPosting> otherList = ((ThreadedDictQueryResult) other).result;
-            List<GlobalPosting> merged = new ArrayList<>();
+        public void and(ThreadedDictQueryResult other) {
+            List<ZonedGlobalPosting> merged = new ArrayList<>();
             int i = 0, j = 0;
-            while (i < result.size() && j < otherList.size()) {
-                GlobalPosting a = result.get(i);
-                GlobalPosting b = otherList.get(j);
+            while (i < result.size() && j < other.result.size()) {
+                ZonedGlobalPosting a = result.get(i);
+                ZonedGlobalPosting b = other.result.get(j);
                 int cmp = a.compareTo(b);
                 if (cmp < 0) {
                     i++;
@@ -84,14 +82,12 @@ public class ThreadedQueryEngineReader {
         }
 
         @Override
-        public void or(QueryResult other) {
-            checkArgument(other);
-            List<GlobalPosting> otherList = ((ThreadedDictQueryResult) other).result;
-            List<GlobalPosting> merged = new ArrayList<>();
+        public void or(ThreadedDictQueryResult other) {
+            List<ZonedGlobalPosting> merged = new ArrayList<>();
             int i = 0, j = 0;
-            while (i < result.size() && j < otherList.size()) {
-                GlobalPosting a = result.get(i);
-                GlobalPosting b = otherList.get(j);
+            while (i < result.size() && j < other.result.size()) {
+                ZonedGlobalPosting a = result.get(i);
+                ZonedGlobalPosting b = other.result.get(j);
                 int cmp = a.compareTo(b);
                 if (cmp < 0) {
                     merged.add(a);
@@ -109,20 +105,20 @@ public class ThreadedQueryEngineReader {
             while (i < result.size()) {
                 merged.add(result.get(i++));
             }
-            while (j < otherList.size()) {
-                merged.add(otherList.get(j++));
+            while (j < other.result.size()) {
+                merged.add(other.result.get(j++));
             }
             result = merged;
         }
 
         @Override
         public void not() {
-            Set<GlobalPosting> allFileIDs = new HashSet<>();
+            Set<ZonedGlobalPosting> allFileIDs = new HashSet<>();
             for(ReadingThread thread : readingThreads){
                 allFileIDs.addAll(thread.getAllFileIDs());
             }
-            ArrayList<GlobalPosting> res = new ArrayList<>();
-            for(GlobalPosting posting : result){
+            ArrayList<ZonedGlobalPosting> res = new ArrayList<>();
+            for(ZonedGlobalPosting posting : result){
                 if(!allFileIDs.contains(posting)){
                     posting.subtract();
                     res.add(posting);
@@ -133,23 +129,17 @@ public class ThreadedQueryEngineReader {
 
         @Override
         public String[] value() {
-            result.sort(Comparator.comparingDouble(GlobalPosting::getRating));
+            result.sort(Comparator.comparingDouble(ZonedGlobalPosting::getRating));
             String[] res = new String[result.size()];
             for(int i = 0; i < result.size(); i++){
-                GlobalPosting posting = result.get(result.size() - 1 - i);
+                ZonedGlobalPosting posting = result.get(result.size() - 1 - i);
                 res[i] = readingThreads[posting.getThreadID()].getFileNameById(posting.getFileID());
             }
             return res;
         }
 
-        public void setValue(List<GlobalPosting> value){
+        public void setValue(List<ZonedGlobalPosting> value){
             result = value;
-        }
-
-        private static void checkArgument(QueryResult other) {
-            if(!(other instanceof ThreadedDictQueryResult)){
-                throw new IllegalArgumentException("QueryResult classes not matching");
-            }
         }
     }
 }

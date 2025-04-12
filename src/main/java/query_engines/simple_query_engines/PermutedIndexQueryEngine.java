@@ -1,7 +1,5 @@
-package realizations.query_engines.tolerant_query_engines;
+package query_engines.simple_query_engines;
 
-import query_system.QueryResult;
-import realizations.query_engines.strict_query_engines.InvertedIndexQueryEngine;
 import utils.arbitrary.JokerQueryFilter;
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
@@ -47,7 +45,7 @@ public class PermutedIndexQueryEngine extends InvertedIndexQueryEngine {
     }
 
     @Override
-    public QueryResult findWord(String word) {
+    public InvIndQueryResult findWord(String word) {
         word = normalize(word);
         word += ' ';
         if(!word.contains("*")){

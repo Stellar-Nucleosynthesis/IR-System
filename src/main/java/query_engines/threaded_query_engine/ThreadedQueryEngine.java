@@ -1,16 +1,15 @@
-package realizations.query_engines.threaded_query_engine;
+package query_engines.threaded_query_engine;
 
 import query_system.QueryEngine;
-import query_system.QueryResult;
-import realizations.query_engines.threaded_query_engine.threaded_query_engine_builder.ThreadedQueryEngineBuilder;
-import realizations.query_engines.threaded_query_engine.threaded_query_engine_reader.ThreadedQueryEngineReader;
+import query_engines.threaded_query_engine.threaded_query_engine_builder.ThreadedQueryEngineBuilder;
+import query_engines.threaded_query_engine.threaded_query_engine_reader.ThreadedQueryEngineReader;
 
 import java.io.*;
 import java.util.List;
 
 import static utils.file_parsing_utils.StemmingStringTokenizer.normalize;
 
-public class ThreadedQueryEngine implements QueryEngine {
+public class ThreadedQueryEngine implements QueryEngine<ThreadedQueryEngineReader.ThreadedDictQueryResult> {
     public ThreadedQueryEngine(File workingDir, List<File> targetFiles, int threadNum) throws InterruptedException {
         ThreadedQueryEngineBuilder builder = new ThreadedQueryEngineBuilder(workingDir, targetFiles, threadNum);
         builder.startAnalysis();
@@ -28,23 +27,22 @@ public class ThreadedQueryEngine implements QueryEngine {
     }
 
     @Override
-    public QueryResult findWord(String word) {
+    public ThreadedQueryEngineReader.ThreadedDictQueryResult findWord(String word) {
         word = normalize(word);
         try{
             return reader.find(word);
         } catch(Exception e){
-            e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public QueryResult findPhrase(String phrase) {
+    public ThreadedQueryEngineReader.ThreadedDictQueryResult findPhrase(String phrase) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public QueryResult findWordsWithin(String word1, String word2, int n) {
+    public ThreadedQueryEngineReader.ThreadedDictQueryResult findWordsWithin(String word1, String word2, int n) {
         throw new UnsupportedOperationException();
     }
 }

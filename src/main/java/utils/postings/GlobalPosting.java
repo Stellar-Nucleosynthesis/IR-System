@@ -1,8 +1,6 @@
 package utils.postings;
 
-import java.io.Serializable;
-
-public class GlobalPosting implements Comparable<GlobalPosting> {
+public class GlobalPosting implements Comparable<GlobalPosting>{
     public GlobalPosting(int threadID, LocalPosting localPosting) {
         this.threadID = threadID;
         this.localPosting = localPosting;
@@ -17,20 +15,6 @@ public class GlobalPosting implements Comparable<GlobalPosting> {
 
     public int getFileID() {
         return localPosting.getFileID();
-    }
-
-    public double getRating() { return localPosting.getRating(); }
-
-    public void merge(GlobalPosting globalPosting) {
-        localPosting.merge(globalPosting.localPosting);
-    }
-
-    public void intersect(GlobalPosting globalPosting) {
-        localPosting.intersect(globalPosting.localPosting);
-    }
-
-    public void subtract() {
-        localPosting.subtract();
     }
 
     @Override

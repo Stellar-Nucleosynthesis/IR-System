@@ -1,6 +1,5 @@
-package realizations.query_engines.strict_query_engines;
+package query_engines.simple_query_engines;
 
-import query_system.QueryResult;
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
 
@@ -39,7 +38,7 @@ public class BWordIndexQueryEngine extends InvertedIndexQueryEngine {
     }
 
     @Override
-    public QueryResult findPhrase(String phrase) {
+    public InvIndQueryResult findPhrase(String phrase) {
         List<String> words = tokenize(phrase);
         if(words.isEmpty()) return new InvIndQueryResult(null);
         if(!dictionary.containsKey(words.getFirst())) return new InvIndQueryResult(null);
