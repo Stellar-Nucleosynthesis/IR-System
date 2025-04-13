@@ -1,6 +1,7 @@
 package utils.encoding_utils;
 
 import java.io.*;
+import java.security.InvalidKeyException;
 
 import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 
@@ -29,7 +30,7 @@ public class BlockedCompressedDictionary {
     private final char[] string;
     private final int[][] array;
 
-    public int getPostingAddr(String term) {
+    public int getPostingAddr(String term) throws InvalidKeyException {
         int lo = 0, hi = array.length - 1;
         while (lo <= hi) {
             int mid = lo + (hi - lo) / 2;
@@ -42,11 +43,16 @@ public class BlockedCompressedDictionary {
                 lo = mid + 1;
             }
         }
-        return -1;
+        throw new InvalidKeyException("Key " + term + "not present.");
     }
 
     public boolean containsTerm(String term) {
-        return getPostingAddr(term) != -1;
+        try{
+            getPostingAddr(term);
+        } catch(InvalidKeyException e){
+            return false;
+        }
+        return true;
     }
 
     private int cmpToTerm(int[] arr, String term) {

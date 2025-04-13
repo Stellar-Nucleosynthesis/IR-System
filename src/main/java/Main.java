@@ -1,27 +1,44 @@
-import query_engines.threaded_query_engine.threaded_query_engine_reader.ThreadedQueryEngineReader.ThreadedDictQueryResult;
-import query_system.QuerySystem;
-import query_engines.threaded_query_engine.ThreadedQueryEngine;
-import query_parsers.PhrasalBooleanRetrQueryParser;
+import threaded_indexer.ThreadedIndexer;
+import retrieval_system.Indexer;
+import retrieval_system.QuerySystem;
+import realisations.zoned_index.ZonedIndexerKernelFactory;
+import realisations.zoned_index.ZonedRetrievalEngineKernelFactory;
+import query_parser.BooleanQueryParser;
+import threaded_retrieval_engine.ThreadedRetrievalEngine;
+import realisations.zoned_index.ZonedRetrievalResult;
+import realisations.zoned_index.ZonedRetrievalResultFactory;
+import realisations.zoned_index.ZonedPosting;
 
 import java.io.*;
 import java.util.*;
 
 public class Main {
+    static File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
+    static File bookDir = new File("C:\\Users\\nstep\\Downloads\\books");
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         threadedDictTest();
     }
 
-    private static void threadedDictTest() throws InterruptedException {
-        File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
-        File bookDir = new File("C:\\Users\\nstep\\Downloads\\books");
-        System.out.println(listFilesRecursive(bookDir).size());
+    private static void threadedDictTest() throws InterruptedException, IOException {
+        System.out.println(listFilesRecursive(bookDir).size() + " files total");
+
         long sTime = System.nanoTime();
-        ThreadedQueryEngine dict = new ThreadedQueryEngine(cwd, 32);
-        QuerySystem<ThreadedDictQueryResult> system = new QuerySystem<>(dict, new PhrasalBooleanRetrQueryParser<>());
+
+        ZonedIndexerKernelFactory zf = new ZonedIndexerKernelFactory();
+        Indexer indexer = new ThreadedIndexer(zf, 32);
+        indexer.analyze(cwd, listFilesRecursive(bookDir));
+
         long eTime = System.nanoTime();
         long dur = eTime - sTime;
-        System.out.println("Index constructed in " + dur/1_000_000 + "ms");
+        System.out.println("Index constructed in " + dur/1_000_000 + " ms");
+
+        ZonedRetrievalResultFactory resultFactory = new ZonedRetrievalResultFactory();
+        ZonedRetrievalEngineKernelFactory kernelFactory = new ZonedRetrievalEngineKernelFactory();
+
+        ThreadedRetrievalEngine<ZonedRetrievalResult, ZonedPosting> engine
+                = new ThreadedRetrievalEngine<>(cwd, resultFactory, kernelFactory, 32);
+        QuerySystem<ZonedRetrievalResult, ZonedPosting> system = new QuerySystem<>(engine, new BooleanQueryParser<>());
 
         while(true){
             System.out.println("Enter a query, enter 0 to stop");
@@ -29,15 +46,16 @@ public class Main {
             if(query.equals("0")) break;
 
             long startTime = System.nanoTime();
-            String[] res = system.query(query);
+            String[] res = system.query(query, 10);
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
 
-            System.out.println(Arrays.toString(Arrays.copyOf(res, 10)));
+            System.out.println(Arrays.toString(res));
             System.out.println("Query completed in " + duration / 1_000_000 + "ms");
             System.out.println(res.length + " results");
         }
-        dict.close();
+
+        engine.close();
     }
 
     private static List<File> listFilesRecursive(File directory) {
