@@ -20,6 +20,11 @@ public class SparseVector {
         }
     }
 
+    public void directSet(int index, double value) {
+        checkBounds(index);
+        elements.put(index, value);
+    }
+
     public double get(int index) {
         checkBounds(index);
         return elements.getOrDefault(index, 0.0);
@@ -78,6 +83,10 @@ public class SparseVector {
             result.set(entry.getKey(), entry.getValue() * scalar);
         }
         return result;
+    }
+
+    public SparseVector toUnitVector(){
+        return this.multiply(1 / this.len());
     }
 
     public double angleTo(SparseVector other) {

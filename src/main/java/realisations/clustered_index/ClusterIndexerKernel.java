@@ -8,6 +8,7 @@ import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
 import utils.file_parsing_utils.StemmingStringTokenizer;
 import utils.spimi_index_constructor.SpimiIndexConstructor;
+import utils.vectors.SparseVector;
 
 import java.io.*;
 import java.security.InvalidKeyException;
@@ -37,11 +38,10 @@ public class ClusterIndexerKernel implements IndexerKernel {
             for(String term : StemmingStringTokenizer.tokenize(line)) {
                 termIds.putIfAbsent(term, termIds.size());
                 int termId = termIds.get(term);
-                vector.addTerm(termId);
+                vector.addToIndex(termId, 1);
             }
             line = reader.readLine();
         }
-        vector.toUnitVector();
         indexConstructor.addPosting(file.getAbsolutePath(), vector);
         reader.close();
     }
@@ -56,6 +56,7 @@ public class ClusterIndexerKernel implements IndexerKernel {
             writer.write(fileName + "\t" + fileIds.get(fileName) + "\n");
         }
         try{
+            calculateIdf(directory);
             constructClusters(directory);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -63,9 +64,56 @@ public class ClusterIndexerKernel implements IndexerKernel {
         writer.close();
     }
 
+    private void calculateIdf(File directory) throws IOException {
+        SparseVector idf = new SparseVector();
+        File outputFile = new File(directory, "output.txt");
+        DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(outputFile)));
+        for(int i = 0; i < fileIds.size(); i++) {
+            ClusterPosting posting = getNextPosting(in);
+            for(Integer termId : posting.getTermVector().getNonZeroEntries()){
+                idf.set(termId, idf.get(termId) + 1);
+            }
+        }
+
+        in.close();
+        List<Integer> indices = new ArrayList<>(idf.getNonZeroEntries());
+        for (int index : indices) {
+            idf.set(index, Math.log(idf.get(index) / fileIds.size()));
+        }
+
+        File indexFile = new File(directory, "index.txt");
+        in = new DataInputStream(new BufferedInputStream(new FileInputStream(outputFile)));
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(indexFile)));
+        for(int i = 0; i < fileIds.size(); i++) {
+            ClusterPosting posting = getNextPosting(in);
+            List<Integer> termIds = new ArrayList<>(posting.getTermVector().getNonZeroEntries());
+            SparseVector termVector = posting.getTermVector();
+            for(Integer termId : termIds){
+                double tf = termVector.get(termId);
+                posting.getTermVector().directSet(termId, tf * idf.get(termId));
+            }
+            new PostingsList<>(List.of(posting)).writePostingsList(out);
+        }
+        in.close();
+        out.close();
+        boolean removed = outputFile.delete();
+        if(!removed) throw new RuntimeException("Failed to delete output file");
+
+        File idfFile = new File(directory, "idf.txt");
+        Map<String, Double> idfMapping = new HashMap<>();
+        for(String term : termIds.keySet()) {
+            idfMapping.put(term, idf.get(termIds.get(term)));
+        }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(idfFile));
+        for(String fileName : idfMapping.keySet()) {
+            writer.write(fileName + "\t" + idfMapping.get(fileName) + "\n");
+        }
+        writer.close();
+    }
+
     private void constructClusters(File directory) throws IOException, InvalidKeyException {
         File postingAddrFile = new File(directory, "postingAddr.txt");
-        File outputFile = new File(directory, "output.txt");
+        File outputFile = new File(directory, "index.txt");
         BlockedCompressedDictionary postingAddr = new BlockedCompressedDictionary(postingAddrFile);
 
         List<String> leaderNames = selectLeaders(fileIds.keySet());
@@ -101,10 +149,16 @@ public class ClusterIndexerKernel implements IndexerKernel {
 
     private ClusterPosting getPosting(File outputFile, int offset) throws IOException {
         PostingsList<ClusterPosting> postings = new PostingsList<>();
-        DataInputStream in = new DataInputStream(new FileInputStream(outputFile));
+        DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(outputFile)));
         in.skipBytes(offset);
         postings.readPostingsList(in, ClusterPosting::new);
         in.close();
         return postings.getPostings().getFirst();
+    }
+
+    private ClusterPosting getNextPosting(DataInputStream in) throws IOException {
+        PostingsList<ClusterPosting> list = new PostingsList<>();
+        list.readPostingsList(in, ClusterPosting::new);
+        return list.getPostings().getFirst();
     }
 }

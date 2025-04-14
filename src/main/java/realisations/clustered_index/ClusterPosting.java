@@ -69,8 +69,20 @@ public class ClusterPosting implements Posting <ClusterPosting>{
         return 1 / angleToQuery;
     }
 
-    public void addTerm(int termId) {
-        termVector.set(termId, 1);
+    public SparseVector getTermVector() {
+        return termVector;
+    }
+
+    public void addToIndex(int index, double value) {
+        termVector.set(index, termVector.get(index) + value);
+    }
+
+    public double angleTo(ClusterPosting other){
+        return this.termVector.angleTo(other.termVector);
+    }
+
+    public void toUnitVector(){
+        this.termVector = this.termVector.toUnitVector();
     }
 
     @Override
@@ -89,14 +101,6 @@ public class ClusterPosting implements Posting <ClusterPosting>{
     public void subtract(ClusterPosting other) {
         assert other.fileId == this.fileId && other.threadId == this.threadId;
         termVector = termVector.add(other.termVector.multiply(-1));
-    }
-
-    public void toUnitVector(){
-        termVector = termVector.multiply(1 / termVector.len());
-    }
-
-    public double angleTo(ClusterPosting other){
-        return this.termVector.angleTo(other.termVector);
     }
 
     @Override

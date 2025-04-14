@@ -12,11 +12,14 @@ import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<ClusterRetrievalResult, ClusterPosting> {
     public ClusterRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
-        this.indexFile = new File(workingDir, "output.txt");
+        this.indexFile = new File(workingDir, "index.txt");
+
         File postingAddrFile = new File(workingDir, "postingAddr.txt");
         this.postingAddr = new BlockedCompressedDictionary(postingAddrFile);
+
         File termIdsFile = new File(workingDir, "termIds.txt");
         this.termIds = new BlockedCompressedDictionary(termIdsFile);
+
         File fileNamesFile = new File(workingDir, "fileIds.txt");
         BufferedReader reader = new BufferedReader(new FileReader(fileNamesFile));
         while (reader.ready()) {
@@ -24,6 +27,15 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
             fileNames.put(Integer.parseInt(line[1]), line[0]);
         }
         reader.close();
+
+        File idfFile = new File(workingDir, "idf.txt");
+        BufferedReader idfReader = new BufferedReader(new FileReader(idfFile));
+        while (idfReader.ready()) {
+            String[] line = idfReader.readLine().split("\t");
+            termIdfs.put(line[0], Double.parseDouble(line[1]));
+        }
+        idfReader.close();
+
         File clusterFile = new File(workingDir, "clusters.txt");
         DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(clusterFile)));
         int clusterNum = readCodedInt(in);
@@ -33,6 +45,7 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
             clusters.add(cluster);
         }
         in.close();
+
         this.threadId = threadId;
     }
 
@@ -40,6 +53,7 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
 
     private final BlockedCompressedDictionary postingAddr;
     private final BlockedCompressedDictionary termIds;
+    private final Map<String, Double> termIdfs = new HashMap<>();
     private final Map<Integer, String> fileNames = new HashMap<>();
     private final Set<Cluster> clusters = new HashSet<>();
 
@@ -52,7 +66,7 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
             ClusterPosting posting = new ClusterPosting(threadId, -1);
             for (String term : terms) {
                 if(termIds.containsKey(term)) {
-                    posting.addTerm(termIds.get(term));
+                    posting.addToIndex(termIds.get(term), termIdfs.get(term));
                 }
             }
             posting.toUnitVector();
