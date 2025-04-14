@@ -10,5 +10,5 @@ public interface RetrievalResult<T extends RetrievalResult<T, P>, P extends Post
 
     void clear();
 
-    PostingsList<P> toPostingList();
+    PostingsList<P> toPostingsList();
 }

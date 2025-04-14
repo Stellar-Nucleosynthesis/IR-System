@@ -14,20 +14,20 @@ import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 
 public class ZonedPosting implements Posting<ZonedPosting> {
-    public ZonedPosting(int threadID, int fileID) {
-        this.threadID = threadID;
-        this.fileID = fileID;
+    public ZonedPosting(int threadId, int fileId) {
+        this.threadId = threadId;
+        this.fileId = fileId;
     }
 
-    private int threadID;
-    private int fileID;
+    private int threadId;
+    private int fileId;
     private List<Zone> zones = new ArrayList<>();
 
     @Override
     public int writePosting(DataOutputStream out) throws IOException {
         int bytesWritten = 0;
-        bytesWritten += writeCodedInt(out, threadID);
-        bytesWritten += writeCodedInt(out, fileID);
+        bytesWritten += writeCodedInt(out, threadId);
+        bytesWritten += writeCodedInt(out, fileId);
         bytesWritten += writeCodedInt(out, zones.size());
         for(Zone z : zones){
             bytesWritten += writeCodedInt(out, z.getIndex());
@@ -37,8 +37,8 @@ public class ZonedPosting implements Posting<ZonedPosting> {
 
     @Override
     public void readPosting(DataInputStream in) throws IOException {
-        threadID = readCodedInt(in);
-        fileID = readCodedInt(in);
+        threadId = readCodedInt(in);
+        fileId = readCodedInt(in);
         zones.clear();
         int numOfZones = readCodedInt(in);
         for(int j = 0; j < numOfZones; j++){
@@ -48,7 +48,7 @@ public class ZonedPosting implements Posting<ZonedPosting> {
 
     @Override
     public void merge(ZonedPosting other) {
-        assert other.fileID == this.fileID && other.threadID == this.threadID;
+        assert other.fileId == this.fileId && other.threadId == this.threadId;
         for(Zone z : other.zones){
             if(!this.zones.contains(z)){
                 this.zones.add(z);
@@ -59,7 +59,7 @@ public class ZonedPosting implements Posting<ZonedPosting> {
 
     @Override
     public void intersect(ZonedPosting other) {
-        assert other.fileID == this.fileID && other.threadID == this.threadID;
+        assert other.fileId == this.fileId && other.threadId == this.threadId;
         List<Zone> newZones = new ArrayList<>();
         for(Zone z : this.zones){
             if(other.zones.contains(z)){
@@ -72,7 +72,7 @@ public class ZonedPosting implements Posting<ZonedPosting> {
 
     @Override
     public void subtract(ZonedPosting other) {
-        assert other.fileID == this.fileID && other.threadID == this.threadID;
+        assert other.fileId == this.fileId && other.threadId == this.threadId;
         List<Zone> newZones = new ArrayList<>();
         for(Zone z : other.zones){
             if(!this.zones.contains(z)){
@@ -85,12 +85,12 @@ public class ZonedPosting implements Posting<ZonedPosting> {
 
     @Override
     public int getFileId(){
-        return fileID;
+        return fileId;
     }
 
     @Override
     public int getThreadId(){
-        return threadID;
+        return threadId;
     }
 
     public void addZone(Zone z){
@@ -111,15 +111,15 @@ public class ZonedPosting implements Posting<ZonedPosting> {
 
     @Override
     public int compareTo(ZonedPosting other) {
-        if(this.threadID != other.threadID) return Integer.compare(this.threadID, other.threadID);
-        return Integer.compare(this.fileID, other.fileID);
+        if(this.threadId != other.threadId) return Integer.compare(this.threadId, other.threadId);
+        return Integer.compare(this.fileId, other.fileId);
     }
 
     @Override
     public boolean equals(Object o){
         if(o == null) return false;
         if(o instanceof ZonedPosting){
-            return this.fileID == ((ZonedPosting) o).fileID && this.threadID == ((ZonedPosting) o).threadID;
+            return this.fileId == ((ZonedPosting) o).fileId && this.threadId == ((ZonedPosting) o).threadId;
         }
         return false;
     }

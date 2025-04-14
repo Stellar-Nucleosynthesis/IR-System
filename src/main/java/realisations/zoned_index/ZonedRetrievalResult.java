@@ -33,7 +33,7 @@ public class ZonedRetrievalResult implements RetrievalResult<ZonedRetrievalResul
     }
 
     @Override
-    public PostingsList<ZonedPosting> toPostingList() {
+    public PostingsList<ZonedPosting> toPostingsList() {
         return postings;
     }
 }

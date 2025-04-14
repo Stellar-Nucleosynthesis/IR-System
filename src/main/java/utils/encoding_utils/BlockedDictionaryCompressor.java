@@ -10,12 +10,12 @@ import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 public class BlockedDictionaryCompressor {
     private static final int TERMS_IN_BLOCK = 8;
 
-    public static void writeCompressedMapping(File file, Map<String, Integer> postingAddr) throws IOException {
-        ArrayList<String> keys = new ArrayList<>(postingAddr.keySet());
+    public static void writeCompressedMapping(File file, Map<String, Integer> dict) throws IOException {
+        ArrayList<String> keys = new ArrayList<>(dict.keySet());
         Collections.sort(keys);
         int tail = keys.size() % TERMS_IN_BLOCK;
         if(tail != 0) {
-            for(int i = 0; i < tail; i++) {
+            for(int i = 0; i < TERMS_IN_BLOCK - tail; i++) {
                 keys.add(keys.getLast());
             }
         }
@@ -35,7 +35,7 @@ public class BlockedDictionaryCompressor {
                 String suffix = keys.get(index + j).substring(prefix.length());
                 resultStr.append((char)suffix.length());
                 resultStr.append(suffix);
-                resultArr[i][j + 1] = postingAddr.get(keys.get(index + j));
+                resultArr[i][j + 1] = dict.get(keys.get(index + j));
             }
         }
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));

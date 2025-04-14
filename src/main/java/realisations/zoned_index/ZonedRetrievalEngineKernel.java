@@ -35,11 +35,11 @@ public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRe
     public ZonedRetrievalResult retrieve(String phrase) {
         List<String> terms = tokenize(phrase);
         String term = terms.getFirst();
-        if(!postingAddr.containsTerm(term)) {
+        if(!postingAddr.containsKey(term)) {
             return new ZonedRetrievalResult(new PostingsList<>());
         }
         try{
-            int postingOffset = postingAddr.getPostingAddr(term);
+            int postingOffset = postingAddr.get(term);
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
             in.skipBytes(postingOffset);
             PostingsList<ZonedPosting> postings = new PostingsList<>();

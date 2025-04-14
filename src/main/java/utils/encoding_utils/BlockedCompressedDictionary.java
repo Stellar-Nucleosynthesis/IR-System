@@ -30,32 +30,32 @@ public class BlockedCompressedDictionary {
     private final char[] string;
     private final int[][] array;
 
-    public int getPostingAddr(String term) throws InvalidKeyException {
+    public int get(String term) throws InvalidKeyException {
         int lo = 0, hi = array.length - 1;
         while (lo <= hi) {
             int mid = lo + (hi - lo) / 2;
-            int res = cmpToTerm(array[mid], term);
+            int res = cmpToKey(array[mid], term);
             if(res == 0){
-                return findPostingAddrIn(array[mid], term);
+                return findValueIn(array[mid], term);
             } else if(res > 0){
                 hi = mid - 1;
             } else {
                 lo = mid + 1;
             }
         }
-        throw new InvalidKeyException("Key " + term + "not present.");
+        throw new InvalidKeyException("Key " + term + " not present.");
     }
 
-    public boolean containsTerm(String term) {
+    public boolean containsKey(String term) {
         try{
-            getPostingAddr(term);
+            get(term);
         } catch(InvalidKeyException e){
             return false;
         }
         return true;
     }
 
-    private int cmpToTerm(int[] arr, String term) {
+    private int cmpToKey(int[] arr, String term) {
         position = arr[0];
         String prefix = readString(readChar());
         for (int i = 0; i < TERMS_IN_BLOCK; i++) {
@@ -70,7 +70,7 @@ public class BlockedCompressedDictionary {
         return -1;
     }
 
-    private int findPostingAddrIn(int[] arr, String term) {
+    private int findValueIn(int[] arr, String term) {
         position = arr[0];
         String prefix = readString(readChar());
         for (int i = 0; i < TERMS_IN_BLOCK; i++) {

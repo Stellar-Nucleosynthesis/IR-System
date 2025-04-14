@@ -5,13 +5,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 
 public class PostingsList<P extends Posting<P>> {
-    private List<P> postings = new ArrayList<>();
+    public PostingsList(){
+        this.postings = new ArrayList<>();
+    }
+
+    public PostingsList(List<P> postings) {
+        this.postings = postings;
+    }
+
+    private List<P> postings;
 
     public int writePostingsList(DataOutputStream out) throws IOException{
         int bytesWritten = 0;
@@ -118,5 +127,9 @@ public class PostingsList<P extends Posting<P>> {
             subtracted.add(postings.get(i++));
         }
         postings = subtracted;
+    }
+
+    public void sort(Comparator<P> comparator){
+        postings.sort(comparator);
     }
 }

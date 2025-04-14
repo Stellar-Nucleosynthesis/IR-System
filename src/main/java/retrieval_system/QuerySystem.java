@@ -3,7 +3,8 @@ package retrieval_system;
 import postings.Posting;
 import retrieval_results.RetrievalResult;
 
-import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class QuerySystem<T extends RetrievalResult<T, P>, P extends Posting<P>> {
     public QuerySystem(RetrievalEngine<T, P> retrievalEngine, QueryParser<T, P> parser) {
@@ -14,8 +15,8 @@ public class QuerySystem<T extends RetrievalResult<T, P>, P extends Posting<P>> 
     private final RetrievalEngine<T, P> retrievalEngine;
     private final QueryParser<T, P> parser;
 
-    public String[] query(String query, int limit){
-        String[] res = parser.query(retrievalEngine, query);
-        return Arrays.copyOf(res, limit);
+    public List<String> query(String query, int limit){
+        List<String> res = parser.query(retrievalEngine, query);
+        return res.stream().limit(limit).collect(Collectors.toList());
     }
 }

@@ -68,15 +68,15 @@ public class ThreadedRetrievalEngine<T extends RetrievalResult<T, P>, P extends 
     }
 
     @Override
-    public String[] valueOf(T result) {
-        List<P> postings = result.toPostingList().getPostings();
+    public List<String> valueOf(T result) {
+        List<P> postings = result.toPostingsList().getPostings();
         postings.sort((p1, p2) -> -Double.compare(p1.getRating(), p2.getRating()));
         List<String> values = new ArrayList<>();
         for (P posting : postings) {
             int threadId = posting.getThreadId();
             values.add(kernels.get(threadId).getFile(posting.getFileId()));
         }
-        return values.toArray(new String[0]);
+        return values;
     }
 
     @Override
