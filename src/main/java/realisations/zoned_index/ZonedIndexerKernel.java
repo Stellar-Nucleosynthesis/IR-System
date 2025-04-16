@@ -16,7 +16,7 @@ import java.util.List;
 public class ZonedIndexerKernel implements IndexerKernel {
     ZonedIndexerKernel(int threadId){
         this.threadId = threadId;
-        indexConstructor = new SpimiIndexConstructor<>(new ZonedPostingFactory());
+        indexConstructor = new SpimiIndexConstructor<>(ZonedPosting::new);
     }
 
     private final int threadId;
@@ -28,11 +28,10 @@ public class ZonedIndexerKernel implements IndexerKernel {
         FileFormatParser reader = FileFormatParserFactory.getFileParser(file);
         int fileId = fileNames.size();
         fileNames.add(file.getAbsolutePath());
-        ZonedPostingFactory factory = new ZonedPostingFactory();
         String line = reader.readLine();
         while (line != null) {
             for(String term : StemmingStringTokenizer.tokenize(line)) {
-                ZonedPosting posting = factory.create(threadId, fileId);
+                ZonedPosting posting = new ZonedPosting(threadId, fileId);
                 posting.addZone(reader.getCurrentZone());
                 indexConstructor.addPosting(term, posting);
             }

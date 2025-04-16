@@ -43,7 +43,7 @@ public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRe
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
             in.skipBytes(postingOffset);
             PostingsList<ZonedPosting> postings = new PostingsList<>();
-            postings.readPostingsList(in, new ZonedPostingFactory());
+            postings.readPostingsList(in, ZonedPosting::new);
             return new ZonedRetrievalResult(postings);
         } catch(Exception e){
             return new ZonedRetrievalResult(new PostingsList<>());
