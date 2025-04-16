@@ -12,7 +12,7 @@ import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRetrievalResult, ZonedPosting> {
     ZonedRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
-        this.indexFile = new File(workingDir, "output.txt");
+        this.indexFile = new File(workingDir, "index.txt");
         File postingAddrFile = new File(workingDir, "postingAddr.txt");
         this.postingAddr = new BlockedCompressedDictionary(postingAddrFile);
         File fileNamesFile = new File(workingDir, "fileNames.txt");

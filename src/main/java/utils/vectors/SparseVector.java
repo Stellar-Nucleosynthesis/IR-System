@@ -20,11 +20,6 @@ public class SparseVector {
         }
     }
 
-    public void directSet(int index, double value) {
-        checkBounds(index);
-        elements.put(index, value);
-    }
-
     public double get(int index) {
         checkBounds(index);
         return elements.getOrDefault(index, 0.0);
@@ -52,41 +47,32 @@ public class SparseVector {
         return Math.sqrt(sumSquares);
     }
 
-    public SparseVector add(SparseVector other) {
-        SparseVector result = new SparseVector();
-        for (Map.Entry<Integer, Double> entry : this.elements.entrySet()) {
-            result.set(entry.getKey(), entry.getValue());
-        }
+    public void add(SparseVector other) {
         for (Map.Entry<Integer, Double> entry : other.elements.entrySet()) {
             int index = entry.getKey();
-            double sum = result.get(index) + entry.getValue();
-            result.set(index, sum);
+            double sum = this.get(index) + entry.getValue();
+            this.set(index, sum);
         }
-        return result;
     }
 
-    public SparseVector multiply(SparseVector other) {
-        SparseVector result = new SparseVector();
+    public void multiply(SparseVector other) {
         for (Map.Entry<Integer, Double> entry : this.elements.entrySet()) {
             int index = entry.getKey();
             if (other.elements.containsKey(index)) {
                 double product = entry.getValue() * other.get(index);
-                result.set(index, product);
+                this.set(index, product);
             }
         }
-        return result;
     }
 
-    public SparseVector multiply(double scalar) {
-        SparseVector result = new SparseVector();
+    public void multiply(double scalar) {
         for (Map.Entry<Integer, Double> entry : this.elements.entrySet()) {
-            result.set(entry.getKey(), entry.getValue() * scalar);
+            this.set(entry.getKey(), entry.getValue() * scalar);
         }
-        return result;
     }
 
-    public SparseVector toUnitVector(){
-        return this.multiply(1 / this.len());
+    public void toUnitVector(){
+        this.multiply(1 / this.len());
     }
 
     public double angleTo(SparseVector other) {
@@ -112,6 +98,6 @@ public class SparseVector {
 
     @Override
     public String toString() {
-        return "SparseVector" + elements.toString();
+        return "SparseVector" + elements;
     }
 }

@@ -2,13 +2,8 @@ import realisations.clustered_index.*;
 import threaded_indexer.ThreadedIndexer;
 import retrieval_system.Indexer;
 import retrieval_system.QuerySystem;
-import realisations.zoned_index.ZonedIndexerKernelFactory;
-import realisations.zoned_index.ZonedRetrievalEngineKernelFactory;
 import query_parser.BooleanQueryParser;
 import threaded_retrieval_engine.ThreadedRetrievalEngine;
-import realisations.zoned_index.ZonedRetrievalResult;
-import realisations.zoned_index.ZonedRetrievalResultFactory;
-import realisations.zoned_index.ZonedPosting;
 
 import java.io.*;
 import java.util.*;
@@ -17,11 +12,11 @@ public class Main {
     static File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
     static File bookDir = new File("C:\\Users\\nstep\\Downloads\\books");
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         threadedDictTest();
     }
 
-    private static void threadedDictTest() throws InterruptedException, IOException {
+    private static void threadedDictTest() throws IOException, InterruptedException {
         System.out.println(listFilesRecursive(bookDir).size() + " files total");
 
         long sTime = System.nanoTime();
@@ -33,9 +28,13 @@ public class Main {
         long dur = eTime - sTime;
         System.out.println("Index constructed in " + dur/1_000_000 + " ms");
 
-        ThreadedRetrievalEngine<ClusterRetrievalResult, ClusterPosting> engine = new ThreadedRetrievalEngine<>(
+        sTime = System.nanoTime();
+        ThreadedRetrievalEngine<ClusterRetrievalResult, DocumentVector> engine = new ThreadedRetrievalEngine<>(
                 cwd, ClusterRetrievalResult::new, ClusterRetrievalEngineKernel::new, 32);
-        QuerySystem<ClusterRetrievalResult, ClusterPosting> system = new QuerySystem<>(engine, new BooleanQueryParser<>());
+        QuerySystem<ClusterRetrievalResult, DocumentVector> system = new QuerySystem<>(engine, new BooleanQueryParser<>());
+        eTime = System.nanoTime();
+        dur = eTime - sTime;
+        System.out.println("Query system launched in " + dur/1_000_000 + " ms");
 
         while(true){
             System.out.println("Enter a query, enter 0 to stop");

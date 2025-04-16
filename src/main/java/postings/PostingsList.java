@@ -42,7 +42,7 @@ public class PostingsList<P extends Posting<P>> {
     }
 
     public List<P> getPostings(){
-        return new ArrayList<>(postings);
+        return postings;
     }
 
     public void addPosting(P posting){

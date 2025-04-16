@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 
 public class BufferedRecordPQ<T extends Posting<T>> {
-    BufferedRecordPQ(List<File> files, PostingFactory<T> factory) throws IOException {
+    public BufferedRecordPQ(List<File> files, PostingFactory<T> factory) throws IOException {
         for (File file : files) {
             BufferedRecordReader<T> reader = new BufferedRecordReader<>(file, factory);
             if (reader.hasNext()) {

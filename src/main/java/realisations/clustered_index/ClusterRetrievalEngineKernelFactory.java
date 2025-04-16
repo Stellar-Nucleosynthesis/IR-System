@@ -5,7 +5,7 @@ import kernels.RetrievalEngineKernelFactory;
 import java.io.File;
 import java.io.IOException;
 
-public class ClusterRetrievalEngineKernelFactory implements RetrievalEngineKernelFactory<ClusterRetrievalResult, ClusterPosting> {
+public class ClusterRetrievalEngineKernelFactory implements RetrievalEngineKernelFactory<ClusterRetrievalResult, DocumentVector> {
     @Override
     public ClusterRetrievalEngineKernel create(File workingDir, int threadId) throws IOException {
         return new ClusterRetrievalEngineKernel(workingDir, threadId);

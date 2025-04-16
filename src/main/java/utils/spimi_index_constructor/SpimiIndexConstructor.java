@@ -19,7 +19,7 @@ public class SpimiIndexConstructor<T extends Posting<T>> {
     private final PostingFactory<T> factory;
     private final HashMap<String, PostingsList<T>> buffer = new HashMap<>();
     private int logsInMemory = 0;
-    private static final int MAX_SIZE = 100_000;
+    private static final int MAX_SIZE = 100;
     private final List<File> tempFiles = new ArrayList<>();
 
     public void addPosting(String term, T posting) throws IOException {
@@ -52,7 +52,7 @@ public class SpimiIndexConstructor<T extends Posting<T>> {
         if(!buffer.isEmpty())
             writeBufferToFile();
         Map<String, Integer> postingAddresses = new HashMap<>();
-        File outputFile = new File(outputDirectory, "output.txt");
+        File outputFile = new File(outputDirectory, "index.txt");
         File postingAddrFile = new File(outputDirectory, "postingAddr.txt");
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
         BufferedRecordPQ<T> pq = new BufferedRecordPQ<>(tempFiles, factory);
@@ -65,12 +65,15 @@ public class SpimiIndexConstructor<T extends Posting<T>> {
                 postings.merge(pq.peekPosting());
                 pq.poll();
             }
+            preProcess(postings);
             postingAddresses.put(currentTerm, bytesWritten);
             bytesWritten += postings.writePostingsList(out);
         }
         out.close();
         savePostingAddr(postingAddrFile, postingAddresses);
     }
+
+    protected void preProcess(PostingsList<T> postings) {}
 
     private void savePostingAddr(File postingAddrFile, Map<String, Integer> postingAddresses) throws IOException {
         BlockedDictionaryCompressor.writeCompressedMapping(postingAddrFile, postingAddresses);

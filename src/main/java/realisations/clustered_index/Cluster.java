@@ -11,21 +11,21 @@ import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 
 public class Cluster {
     Cluster(){
-        this.leader = new ClusterPosting(-1, -1);
+        this.leader = new DocumentVector(-1, -1);
     }
 
-    Cluster(ClusterPosting leader){
+    Cluster(DocumentVector leader){
         this.leader = leader;
     }
 
-    private final ClusterPosting leader;
+    private final DocumentVector leader;
     private List<Integer> fileIds = new ArrayList<>();
 
     public void addFileId(int fileId) {
         fileIds.add(fileId);
     }
 
-    public ClusterPosting getLeader() {
+    public DocumentVector getLeader() {
         return this.leader;
     }
 

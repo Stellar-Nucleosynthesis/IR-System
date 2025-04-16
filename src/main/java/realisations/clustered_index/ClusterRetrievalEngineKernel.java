@@ -7,10 +7,11 @@ import utils.encoding_utils.BlockedCompressedDictionary;
 import java.io.*;
 import java.util.*;
 
+import static java.lang.Integer.parseInt;
 import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
-public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<ClusterRetrievalResult, ClusterPosting> {
+public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<ClusterRetrievalResult, DocumentVector> {
     public ClusterRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
         this.indexFile = new File(workingDir, "index.txt");
 
@@ -24,7 +25,7 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
         BufferedReader reader = new BufferedReader(new FileReader(fileNamesFile));
         while (reader.ready()) {
             String[] line = reader.readLine().split("\t");
-            fileNames.put(Integer.parseInt(line[1]), line[0]);
+            fileNames.put(parseInt(line[1]), line[0]);
         }
         reader.close();
 
@@ -32,7 +33,7 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
         BufferedReader idfReader = new BufferedReader(new FileReader(idfFile));
         while (idfReader.ready()) {
             String[] line = idfReader.readLine().split("\t");
-            termIdfs.put(line[0], Double.parseDouble(line[1]));
+            idfs.put(Integer.valueOf(line[0]), Double.parseDouble(line[1]));
         }
         idfReader.close();
 
@@ -53,7 +54,7 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
 
     private final BlockedCompressedDictionary postingAddr;
     private final BlockedCompressedDictionary termIds;
-    private final Map<String, Double> termIdfs = new HashMap<>();
+    private final Map<Integer, Double> idfs = new HashMap<>();
     private final Map<Integer, String> fileNames = new HashMap<>();
     private final Set<Cluster> clusters = new HashSet<>();
 
@@ -63,21 +64,23 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
     public ClusterRetrievalResult retrieve(String phrase) {
         try{
             List<String> terms = tokenize(phrase);
-            ClusterPosting posting = new ClusterPosting(threadId, -1);
+            DocumentVector posting = new DocumentVector(threadId, -1);
             for (String term : terms) {
                 if(termIds.containsKey(term)) {
-                    posting.addToIndex(termIds.get(term), termIdfs.get(term));
+                    int termId = termIds.get(term);
+                    posting.addToIndex(termId, idfs.get(termId));
                 }
             }
             posting.toUnitVector();
-            Cluster nearestCluster = Collections.min(clusters, Comparator.comparingDouble(l -> l.getLeader().angleTo(posting)));
-            List<ClusterPosting> postings = new ArrayList<>();
+            Cluster nearestCluster = Collections.min(clusters,
+                    Comparator.comparingDouble(l -> l.getLeader().angleTo(posting)));
+            List<DocumentVector> postings = new ArrayList<>();
             for(int fileId : nearestCluster.getFileIds()){
                 int offset = postingAddr.get(fileNames.get(fileId));
-                ClusterPosting clusterPosting = getPosting(indexFile, offset);
-                        new ClusterPosting(threadId, fileId);
-                clusterPosting.setAngleToQuery(clusterPosting.angleTo(posting));
-                postings.add(clusterPosting);
+                DocumentVector documentVector = getPosting(indexFile, offset);
+                        new DocumentVector(threadId, fileId);
+                documentVector.setAngleToQuery(documentVector.angleTo(posting));
+                postings.add(documentVector);
             }
             return new ClusterRetrievalResult(new PostingsList<>(postings));
         } catch(Exception e){
@@ -85,11 +88,11 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
         }
     }
 
-    private ClusterPosting getPosting(File outputFile, int offset) throws IOException {
-        PostingsList<ClusterPosting> postings = new PostingsList<>();
+    private DocumentVector getPosting(File outputFile, int offset) throws IOException {
+        PostingsList<DocumentVector> postings = new PostingsList<>();
         DataInputStream in = new DataInputStream(new FileInputStream(outputFile));
         in.skipBytes(offset);
-        postings.readPostingsList(in, ClusterPosting::new);
+        postings.readPostingsList(in, DocumentVector::new);
         in.close();
         return postings.getPostings().getFirst();
     }
@@ -101,9 +104,9 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
 
     @Override
     public ClusterRetrievalResult retrieveAll() {
-        PostingsList<ClusterPosting> postings = new PostingsList<>();
+        PostingsList<DocumentVector> postings = new PostingsList<>();
         for(int i = 0; i < fileNames.size(); i++){
-            postings.addPosting(new ClusterPosting(threadId, i));
+            postings.addPosting(new DocumentVector(threadId, i));
         }
         return new ClusterRetrievalResult(postings);
     }

@@ -11,8 +11,8 @@ import java.util.Set;
 import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
 import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 
-public class ClusterPosting implements Posting <ClusterPosting>{
-    public ClusterPosting(int threadId, int fileId) {
+public class DocumentVector implements Posting<DocumentVector>{
+    public DocumentVector(int threadId, int fileId) {
         this.threadId = threadId;
         this.fileId = fileId;
     }
@@ -77,34 +77,36 @@ public class ClusterPosting implements Posting <ClusterPosting>{
         termVector.set(index, termVector.get(index) + value);
     }
 
-    public double angleTo(ClusterPosting other){
+    public double angleTo(DocumentVector other){
         return this.termVector.angleTo(other.termVector);
     }
 
     public void toUnitVector(){
-        this.termVector = this.termVector.toUnitVector();
+        this.termVector.toUnitVector();
     }
 
     @Override
-    public void merge(ClusterPosting other) {
+    public void merge(DocumentVector other) {
         assert other.fileId == this.fileId && other.threadId == this.threadId;
-        termVector = termVector.add(other.termVector);
+        termVector.add(other.termVector);
     }
 
     @Override
-    public void intersect(ClusterPosting other) {
+    public void intersect(DocumentVector other) {
         assert other.fileId == this.fileId && other.threadId == this.threadId;
-        termVector = termVector.multiply(other.termVector);
+        termVector.multiply(other.termVector);
     }
 
     @Override
-    public void subtract(ClusterPosting other) {
+    public void subtract(DocumentVector other) {
         assert other.fileId == this.fileId && other.threadId == this.threadId;
-        termVector = termVector.add(other.termVector.multiply(-1));
+        other.termVector.multiply(-1);
+        termVector.add(other.termVector);
+        other.termVector.multiply(-1);
     }
 
     @Override
-    public int compareTo(ClusterPosting other) {
+    public int compareTo(DocumentVector other) {
         if(this.threadId != other.threadId) return Integer.compare(this.threadId, other.threadId);
         return Integer.compare(this.fileId, other.fileId);
     }
@@ -112,8 +114,8 @@ public class ClusterPosting implements Posting <ClusterPosting>{
     @Override
     public boolean equals(Object o){
         if(o == null) return false;
-        if(o instanceof ClusterPosting){
-            return this.fileId == ((ClusterPosting) o).fileId && this.threadId == ((ClusterPosting) o).threadId;
+        if(o instanceof DocumentVector){
+            return this.fileId == ((DocumentVector) o).fileId && this.threadId == ((DocumentVector) o).threadId;
         }
         return false;
     }

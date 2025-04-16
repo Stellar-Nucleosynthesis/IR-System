@@ -3,16 +3,16 @@ package realisations.clustered_index;
 import postings.PostingsList;
 import retrieval_results.RetrievalResult;
 
-public class ClusterRetrievalResult implements RetrievalResult<ClusterRetrievalResult, ClusterPosting> {
+public class ClusterRetrievalResult implements RetrievalResult<ClusterRetrievalResult, DocumentVector> {
     public ClusterRetrievalResult() {
         this.postings = new PostingsList<>();
     }
 
-    public ClusterRetrievalResult(PostingsList<ClusterPosting> postings) {
+    public ClusterRetrievalResult(PostingsList<DocumentVector> postings) {
         this.postings = postings;
     }
 
-    private PostingsList<ClusterPosting> postings;
+    private PostingsList<DocumentVector> postings;
 
     @Override
     public void merge(ClusterRetrievalResult other) {
@@ -33,7 +33,7 @@ public class ClusterRetrievalResult implements RetrievalResult<ClusterRetrievalR
     }
 
     @Override
-    public PostingsList<ClusterPosting> toPostingsList() {
+    public PostingsList<DocumentVector> toPostingsList() {
         return postings;
     }
 }
