@@ -10,14 +10,15 @@ import java.io.*;
 import java.util.*;
 
 public class ClusterIndexerKernel implements IndexerKernel {
-    public ClusterIndexerKernel(int threadId){
+    public ClusterIndexerKernel(int threadId, int bufferSize){
         this.threadId = threadId;
+        this.indexConstructor = new ClusterIndexConstructor(DocumentVector::new, bufferSize);
     }
 
     private final int threadId;
     private final Map<String, Integer> fileIds = new HashMap<>();
     private final Map<String, Integer> termIds = new HashMap<>();
-    private final ClusterIndexConstructor indexConstructor = new ClusterIndexConstructor(DocumentVector::new);
+    private final ClusterIndexConstructor indexConstructor;
 
     @Override
     public void analyze(File file) throws IOException {

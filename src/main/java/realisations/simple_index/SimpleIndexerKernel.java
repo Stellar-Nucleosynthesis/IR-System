@@ -1,9 +1,9 @@
-package realisations.zoned_index;
+package realisations.simple_index;
 
+import kernels.IndexerKernel;
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
 import utils.file_parsing_utils.StemmingStringTokenizer;
-import kernels.IndexerKernel;
 import utils.spimi_index_constructor.SpimiIndexConstructor;
 
 import java.io.BufferedWriter;
@@ -13,15 +13,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ZonedIndexerKernel implements IndexerKernel {
-    ZonedIndexerKernel(int threadId, int bufferSize){
+public class SimpleIndexerKernel implements IndexerKernel {
+    public SimpleIndexerKernel(int threadId, int bufferSize){
         this.threadId = threadId;
-        indexConstructor = new SpimiIndexConstructor<>(ZonedPosting::new, bufferSize);
+        indexConstructor = new SpimiIndexConstructor<>(SimplePosting::new, bufferSize);
     }
 
     private final int threadId;
     private final List<String> fileNames = new ArrayList<>();
-    private final SpimiIndexConstructor<ZonedPosting> indexConstructor;
+    private final SpimiIndexConstructor<SimplePosting> indexConstructor;
 
     @Override
     public void analyze(File file) throws IOException {
@@ -30,11 +30,8 @@ public class ZonedIndexerKernel implements IndexerKernel {
         fileNames.add(file.getAbsolutePath());
         String line = reader.readLine();
         while (line != null) {
-            for(String term : StemmingStringTokenizer.tokenize(line)) {
-                ZonedPosting posting = new ZonedPosting(threadId, fileId);
-                posting.addZone(reader.getCurrentZone());
-                indexConstructor.addPosting(term, posting);
-            }
+            for(String term : StemmingStringTokenizer.tokenize(line))
+                indexConstructor.addPosting(term, new SimplePosting(threadId, fileId));
             line = reader.readLine();
         }
         reader.close();

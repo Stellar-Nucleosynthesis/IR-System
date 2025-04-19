@@ -21,7 +21,7 @@ public class Main {
 
         long sTime = System.nanoTime();
 
-        Indexer indexer = new ThreadedIndexer(ClusterIndexerKernel::new, 32);
+        Indexer indexer = new ThreadedIndexer(ClusterIndexerKernel::new, 32, 100);
         indexer.analyze(cwd, listFilesRecursive(bookDir));
 
         long eTime = System.nanoTime();

@@ -12,14 +12,16 @@ import java.util.*;
 import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 
 public class SpimiIndexConstructor<T extends Posting<T>> {
-    public SpimiIndexConstructor(PostingFactory<T> factory){
+    public SpimiIndexConstructor(PostingFactory<T> factory, int bufferSize){
         this.factory = factory;
+        if(bufferSize <= 0) bufferSize = 100;
+        this.MAX_SIZE = bufferSize;
     }
 
     private final PostingFactory<T> factory;
     private final HashMap<String, PostingsList<T>> buffer = new HashMap<>();
     private int logsInMemory = 0;
-    private static final int MAX_SIZE = 100;
+    private final int MAX_SIZE;
     private final List<File> tempFiles = new ArrayList<>();
 
     public void addPosting(String term, T posting) throws IOException {

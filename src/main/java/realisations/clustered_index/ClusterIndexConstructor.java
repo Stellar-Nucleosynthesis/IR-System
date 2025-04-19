@@ -11,8 +11,8 @@ import java.util.*;
 import static utils.encoding_utils.VariableByteEncoding.writeCodedInt;
 
 public class ClusterIndexConstructor extends SpimiIndexConstructor<DocumentVector> {
-    public ClusterIndexConstructor(PostingFactory<DocumentVector> factory) {
-        super(factory);
+    public ClusterIndexConstructor(PostingFactory<DocumentVector> factory, int bufferSize) {
+        super(factory, bufferSize);
     }
 
     private final SparseVector df = new SparseVector();

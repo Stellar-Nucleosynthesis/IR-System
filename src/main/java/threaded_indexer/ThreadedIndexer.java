@@ -8,13 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ThreadedIndexer implements Indexer {
-    public ThreadedIndexer(IndexerKernelFactory factory, int threadNum) {
+    public ThreadedIndexer(IndexerKernelFactory factory, int threadNum, int bufferSize) {
         this.threadNum = threadNum;
         this.factory = factory;
+        this.bufferSize = bufferSize;
     }
 
     private final int threadNum;
     private final IndexerKernelFactory factory;
+    private final int bufferSize;
 
     @Override
     public void analyze(File workingDir, List<File> targetFiles) throws InterruptedException {
@@ -23,7 +25,7 @@ public class ThreadedIndexer implements Indexer {
         for (int i = 0; i < threadNum; i++) {
             File threadDir = new File(workingDir, "thread_" + i + "_output");
             boolean res = threadDir.mkdirs();
-            threads[i] = new Thread(new IndexingThread(factory.createIndexerKernel(i), threadDir, targets.get(i)));
+            threads[i] = new Thread(new IndexingThread(factory.createIndexerKernel(i, bufferSize), threadDir, targets.get(i)));
             threads[i].start();
         }
         for (Thread thread : threads) {

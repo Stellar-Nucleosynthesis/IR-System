@@ -81,10 +81,6 @@ public class DocumentVector implements Posting<DocumentVector>{
         return this.termVector.angleTo(other.termVector);
     }
 
-    public void toUnitVector(){
-        this.termVector.toUnitVector();
-    }
-
     @Override
     public void merge(DocumentVector other) {
         assert other.fileId == this.fileId && other.threadId == this.threadId;

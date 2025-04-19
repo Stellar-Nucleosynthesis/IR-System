@@ -64,22 +64,21 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
     public ClusterRetrievalResult retrieve(String phrase) {
         try{
             List<String> terms = tokenize(phrase);
-            DocumentVector posting = new DocumentVector(threadId, -1);
+            DocumentVector queryVector = new DocumentVector(threadId, -1);
             for (String term : terms) {
                 if(termIds.containsKey(term)) {
                     int termId = termIds.get(term);
-                    posting.addToIndex(termId, idfs.get(termId));
+                    queryVector.addToIndex(termId, idfs.get(termId));
                 }
             }
-            posting.toUnitVector();
             Cluster nearestCluster = Collections.min(clusters,
-                    Comparator.comparingDouble(l -> l.getLeader().angleTo(posting)));
+                    Comparator.comparingDouble(l -> l.getLeader().angleTo(queryVector)));
             List<DocumentVector> postings = new ArrayList<>();
             for(int fileId : nearestCluster.getFileIds()){
                 int offset = postingAddr.get(fileNames.get(fileId));
                 DocumentVector documentVector = getPosting(indexFile, offset);
                         new DocumentVector(threadId, fileId);
-                documentVector.setAngleToQuery(documentVector.angleTo(posting));
+                documentVector.setAngleToQuery(documentVector.angleTo(queryVector));
                 postings.add(documentVector);
             }
             return new ClusterRetrievalResult(new PostingsList<>(postings));

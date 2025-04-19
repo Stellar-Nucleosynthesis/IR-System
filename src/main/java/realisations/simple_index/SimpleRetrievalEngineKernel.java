@@ -1,8 +1,8 @@
-package realisations.zoned_index;
+package realisations.simple_index;
 
 import kernels.RetrievalEngineKernel;
-import utils.encoding_utils.BlockedCompressedDictionary;
 import postings.PostingsList;
+import utils.encoding_utils.BlockedCompressedDictionary;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -10,8 +10,8 @@ import java.util.List;
 
 import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
-public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRetrievalResult, ZonedPosting> {
-    public ZonedRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
+public class SimpleRetrievalEngineKernel implements RetrievalEngineKernel<SimpleRetrievalResult, SimplePosting> {
+    public SimpleRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
         this.indexFile = new File(workingDir, "index.txt");
         File postingAddrFile = new File(workingDir, "postingAddr.txt");
         this.postingAddr = new BlockedCompressedDictionary(postingAddrFile);
@@ -32,36 +32,36 @@ public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRe
     private final File indexFile;
 
     @Override
-    public ZonedRetrievalResult retrieve(String phrase) {
+    public SimpleRetrievalResult retrieve(String phrase) {
         List<String> terms = tokenize(phrase);
         String term = terms.getFirst();
         if(!postingAddr.containsKey(term)) {
-            return new ZonedRetrievalResult(new PostingsList<>());
+            return new SimpleRetrievalResult(new PostingsList<>());
         }
         try{
             int postingOffset = postingAddr.get(term);
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(indexFile)));
             in.skipBytes(postingOffset);
-            PostingsList<ZonedPosting> postings = new PostingsList<>();
-            postings.readPostingsList(in, ZonedPosting::new);
-            return new ZonedRetrievalResult(postings);
+            PostingsList<SimplePosting> postings = new PostingsList<>();
+            postings.readPostingsList(in, SimplePosting::new);
+            return new SimpleRetrievalResult(postings);
         } catch(Exception e){
-            return new ZonedRetrievalResult(new PostingsList<>());
+            return new SimpleRetrievalResult(new PostingsList<>());
         }
     }
 
     @Override
-    public ZonedRetrievalResult retrieve(String term1, String term2, int distance) {
+    public SimpleRetrievalResult retrieve(String term1, String term2, int distance) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public ZonedRetrievalResult retrieveAll() {
-        PostingsList<ZonedPosting> postings = new PostingsList<>();
+    public SimpleRetrievalResult retrieveAll() {
+        PostingsList<SimplePosting> postings = new PostingsList<>();
         for(int i = 0; i < fileNames.size(); i++){
-            postings.addPosting(new ZonedPosting(threadId, i));
+            postings.addPosting(new SimplePosting(threadId, i));
         }
-        return new ZonedRetrievalResult(postings);
+        return new SimpleRetrievalResult(postings);
     }
 
     @Override

@@ -71,10 +71,6 @@ public class SparseVector {
         }
     }
 
-    public void toUnitVector(){
-        this.multiply(1 / this.len());
-    }
-
     public double angleTo(SparseVector other) {
         double dot = this.dot(other);
         double lenProduct = this.len() * other.len();
