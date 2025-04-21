@@ -12,12 +12,14 @@ public class BufferedRecordReader<T extends Posting<T>> {
     public BufferedRecordReader(File file, PostingFactory<T> factory) throws IOException {
         this.in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
         this.factory = factory;
+        this.recordsLeft = readCodedInt(in);
         advance();
     }
 
     private final PostingFactory<T> factory;
 
     private final DataInputStream in;
+    private int recordsLeft;
     public String term;
     public PostingsList<T> postings = new PostingsList<>();
 
@@ -26,7 +28,7 @@ public class BufferedRecordReader<T extends Posting<T>> {
     }
 
     public void advance() throws IOException {
-        if (in.available() == 0) {
+        if (recordsLeft-- <= 0) {
             term = null;
             in.close();
             return;

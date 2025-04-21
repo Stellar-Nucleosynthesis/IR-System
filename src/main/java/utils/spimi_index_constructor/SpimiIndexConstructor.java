@@ -39,6 +39,7 @@ public class SpimiIndexConstructor<T extends Posting<T>> {
         File tempFile = Files.createTempFile("temp_" + UUID.randomUUID(), ".txt").toFile();
         tempFiles.add(tempFile);
         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));
+        writeCodedInt(out, terms.size());
         for (String term : terms) {
             writeCodedInt(out, term.length());
             out.writeChars(term);

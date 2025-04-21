@@ -15,7 +15,6 @@ public class ClusterIndexConstructor extends SpimiIndexConstructor<DocumentVecto
         super(factory, bufferSize);
     }
 
-    private final SparseVector df = new SparseVector();
     private final SparseVector idf = new SparseVector();
     private final List<Integer> fileIds = new ArrayList<>();
     private final Map<Integer, Cluster> clusters = new HashMap<>();
@@ -23,7 +22,7 @@ public class ClusterIndexConstructor extends SpimiIndexConstructor<DocumentVecto
     @Override
     public void addPosting(String term, DocumentVector vector) throws IOException {
         for(Integer termId : vector.getTermVector().getNonZeroEntries()){
-            df.set(termId, df.get(termId) + 1);
+            idf.set(termId, idf.get(termId) + 1);
         }
         fileIds.add(vector.getFileId());
         chooseLeader(vector);
@@ -32,8 +31,9 @@ public class ClusterIndexConstructor extends SpimiIndexConstructor<DocumentVecto
 
     @Override
     public void constructIndex(File outputDirectory) throws IOException{
-        for (int index : df.getNonZeroEntries()) {
-            idf.set(index, Math.log(df.get(index) / fileIds.size()));
+        List<Integer> nonZeroEntries = new ArrayList<>(idf.getNonZeroEntries());
+        for (int index : nonZeroEntries) {
+            idf.set(index, Math.log(idf.get(index) / fileIds.size()));
         }
         for(Cluster cluster : clusters.values()){
             cluster.getLeader().getTermVector().multiply(idf);
@@ -47,8 +47,7 @@ public class ClusterIndexConstructor extends SpimiIndexConstructor<DocumentVecto
     protected void preProcess(PostingsList<DocumentVector> postings) {
         for(DocumentVector vector : postings.getPostings()){
             vector.getTermVector().multiply(idf);
-            List<Integer> leaders = new ArrayList<>(clusters.keySet());
-            int minLeader = Collections.min(leaders, Comparator.comparingDouble(
+            int minLeader = Collections.min(clusters.keySet(), Comparator.comparingDouble(
                     l -> clusters.get(l).getLeader().angleTo(vector)));
             clusters.get(minLeader).addFileId(vector.getFileId());
         }

@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StemmingStringTokenizer {
-    public static List<String> tokenize(String line) {
+    public List<String> tokenize(String line) {
         List<String> result = new ArrayList<>();
         Pattern pattern = Pattern.compile("[a-zA-Z0-9-'`]+");
         Matcher matcher = pattern.matcher(line);
@@ -21,8 +21,9 @@ public class StemmingStringTokenizer {
         return result;
     }
 
-    public static String normalize(String word){
-        PorterStemmer stemmer = new PorterStemmer();
+    private final PorterStemmer stemmer = new PorterStemmer();
+
+    public String normalize(String word){
         word = word.toLowerCase().replaceAll("[-`']", "");
         return stemmer.stem(word);
     }

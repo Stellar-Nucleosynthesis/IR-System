@@ -29,8 +29,9 @@ public class SimpleIndexerKernel implements IndexerKernel {
         int fileId = fileNames.size();
         fileNames.add(file.getAbsolutePath());
         String line = reader.readLine();
+        StemmingStringTokenizer tokenizer = new StemmingStringTokenizer();
         while (line != null) {
-            for(String term : StemmingStringTokenizer.tokenize(line))
+            for(String term : tokenizer.tokenize(line))
                 indexConstructor.addPosting(term, new SimplePosting(threadId, fileId));
             line = reader.readLine();
         }

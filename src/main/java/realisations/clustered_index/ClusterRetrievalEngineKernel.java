@@ -3,13 +3,13 @@ package realisations.clustered_index;
 import kernels.RetrievalEngineKernel;
 import postings.PostingsList;
 import utils.encoding_utils.BlockedCompressedDictionary;
+import utils.file_parsing_utils.StemmingStringTokenizer;
 
 import java.io.*;
 import java.util.*;
 
 import static java.lang.Integer.parseInt;
 import static utils.encoding_utils.VariableByteEncoding.readCodedInt;
-import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<ClusterRetrievalResult, DocumentVector> {
     public ClusterRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
@@ -63,7 +63,8 @@ public class ClusterRetrievalEngineKernel implements RetrievalEngineKernel<Clust
     @Override
     public ClusterRetrievalResult retrieve(String phrase) {
         try{
-            List<String> terms = tokenize(phrase);
+            StemmingStringTokenizer tokenizer = new StemmingStringTokenizer();
+            List<String> terms = tokenizer.tokenize(phrase);
             DocumentVector queryVector = new DocumentVector(threadId, -1);
             for (String term : terms) {
                 if(termIds.containsKey(term)) {

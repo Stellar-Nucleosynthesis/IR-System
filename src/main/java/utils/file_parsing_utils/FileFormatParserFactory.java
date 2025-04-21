@@ -17,12 +17,14 @@ public class FileFormatParserFactory {
         }
     }
 
+    private final static int BUFFER_SIZE = 128 * 1024;
+
     private static class TxtParser implements FileFormatParser {
         private final BufferedReader reader;
         private Zone currentZone;
 
         TxtParser(File file) throws FileNotFoundException {
-            this.reader = new BufferedReader(new FileReader(file));
+            this.reader = new BufferedReader(new FileReader(file), BUFFER_SIZE);
             this.currentZone = Zone.BODY;
         }
 

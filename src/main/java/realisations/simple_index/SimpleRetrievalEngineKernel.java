@@ -3,12 +3,11 @@ package realisations.simple_index;
 import kernels.RetrievalEngineKernel;
 import postings.PostingsList;
 import utils.encoding_utils.BlockedCompressedDictionary;
+import utils.file_parsing_utils.StemmingStringTokenizer;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class SimpleRetrievalEngineKernel implements RetrievalEngineKernel<SimpleRetrievalResult, SimplePosting> {
     public SimpleRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
@@ -33,7 +32,8 @@ public class SimpleRetrievalEngineKernel implements RetrievalEngineKernel<Simple
 
     @Override
     public SimpleRetrievalResult retrieve(String phrase) {
-        List<String> terms = tokenize(phrase);
+        StemmingStringTokenizer tokenizer = new StemmingStringTokenizer();
+        List<String> terms = tokenizer.tokenize(phrase);
         String term = terms.getFirst();
         if(!postingAddr.containsKey(term)) {
             return new SimpleRetrievalResult(new PostingsList<>());

@@ -1,4 +1,9 @@
 import realisations.clustered_index.*;
+import realisations.simple_index.SimpleIndexerKernel;
+import realisations.simple_index.SimplePosting;
+import realisations.simple_index.SimpleRetrievalEngineKernel;
+import realisations.simple_index.SimpleRetrievalResult;
+import realisations.zoned_index.ZonedIndexerKernel;
 import threaded_indexer.ThreadedIndexer;
 import retrieval_system.Indexer;
 import retrieval_system.QuerySystem;
@@ -9,8 +14,8 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static File cwd = new File("C:\\Users\\nstep\\Desktop\\Dictionary");
-    static File bookDir = new File("C:\\Users\\nstep\\Downloads\\books");
+    static File cwd = new File("index");
+    static File bookDir = new File("C:\\Users\\nstep\\Downloads\\smol_books");
 
     public static void main(String[] args) throws IOException, InterruptedException {
         threadedDictTest();
@@ -21,7 +26,7 @@ public class Main {
 
         long sTime = System.nanoTime();
 
-        Indexer indexer = new ThreadedIndexer(ClusterIndexerKernel::new, 32, 100);
+        Indexer indexer = new ThreadedIndexer(ClusterIndexerKernel::new, 32, 1_000_000);
         indexer.analyze(cwd, listFilesRecursive(bookDir));
 
         long eTime = System.nanoTime();
@@ -36,9 +41,10 @@ public class Main {
         dur = eTime - sTime;
         System.out.println("Query system launched in " + dur/1_000_000 + " ms");
 
+        Scanner scanner = new Scanner(System.in);
         while(true){
             System.out.println("Enter a query, enter 0 to stop");
-            String query = System.console().readLine();
+            String query = scanner.nextLine();
             if(query.equals("0")) break;
 
             long startTime = System.nanoTime();

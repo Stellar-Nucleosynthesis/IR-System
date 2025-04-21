@@ -1,6 +1,8 @@
 package realisations.clustered_index;
 
 import kernels.IndexerKernel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import utils.encoding_utils.BlockedDictionaryCompressor;
 import utils.file_parsing_utils.FileFormatParser;
 import utils.file_parsing_utils.FileFormatParserFactory;
@@ -10,6 +12,8 @@ import java.io.*;
 import java.util.*;
 
 public class ClusterIndexerKernel implements IndexerKernel {
+    private static final Logger log = LoggerFactory.getLogger(ClusterIndexerKernel.class);
+
     public ClusterIndexerKernel(int threadId, int bufferSize){
         this.threadId = threadId;
         this.indexConstructor = new ClusterIndexConstructor(DocumentVector::new, bufferSize);
@@ -26,9 +30,10 @@ public class ClusterIndexerKernel implements IndexerKernel {
         int fileId = fileIds.size();
         fileIds.put(file.getAbsolutePath(), fileId);
         DocumentVector vector = new DocumentVector(threadId, fileId);
+        StemmingStringTokenizer tokenizer = new StemmingStringTokenizer();
         String line = reader.readLine();
         while (line != null) {
-            for(String term : StemmingStringTokenizer.tokenize(line)) {
+            for(String term : tokenizer.tokenize(line)) {
                 termIds.putIfAbsent(term, termIds.size());
                 int termId = termIds.get(term);
                 vector.addToIndex(termId, 1);

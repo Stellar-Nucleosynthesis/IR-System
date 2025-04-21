@@ -3,12 +3,11 @@ package realisations.zoned_index;
 import kernels.RetrievalEngineKernel;
 import utils.encoding_utils.BlockedCompressedDictionary;
 import postings.PostingsList;
+import utils.file_parsing_utils.StemmingStringTokenizer;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static utils.file_parsing_utils.StemmingStringTokenizer.tokenize;
 
 public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRetrievalResult, ZonedPosting> {
     public ZonedRetrievalEngineKernel(File workingDir, int threadId) throws IOException {
@@ -33,7 +32,8 @@ public class ZonedRetrievalEngineKernel implements RetrievalEngineKernel<ZonedRe
 
     @Override
     public ZonedRetrievalResult retrieve(String phrase) {
-        List<String> terms = tokenize(phrase);
+        StemmingStringTokenizer tokenizer = new StemmingStringTokenizer();
+        List<String> terms = tokenizer.tokenize(phrase);
         String term = terms.getFirst();
         if(!postingAddr.containsKey(term)) {
             return new ZonedRetrievalResult(new PostingsList<>());
